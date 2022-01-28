@@ -1,0 +1,7 @@
+{
+  "replace": true,
+  "values": [
+    "#saplanting:saplings/nether",
+    "#saplanting:saplings/overworld"
+  ]
+}

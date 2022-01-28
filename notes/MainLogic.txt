@@ -1,0 +1,15 @@
+--> Check Environment
+1. is an plantable item
+2. block below it is OK
+3. space at the item is free
+
+--> Do planting
+1. remove count 1, kill this if only 1 // no need to kill; if empty, method Entity.tick() will remove.
+2. set block
+
+--> figure out
+1. how to get item id
+2. how to match item object with minecraft item tag
+3. how to get block pos
+4. how to match block id with valid base block
+5.

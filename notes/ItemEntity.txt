@@ -1,0 +1,9 @@
+继承Entity类
+
+属性简介
+DESPAWN_AGE 物品消失的时间
+CANNOT_PICK_UP_DELAY 不能被捡起来的时间
+NEVER_DESPAWN_AGE #GET ME#
+itemAge 当前物品实体被创建后经过的tick数
+pickupDelay
+
