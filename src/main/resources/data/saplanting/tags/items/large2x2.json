@@ -1,0 +1,8 @@
+{
+  "replace": true,
+  "values": [
+    "minecraft:jungle_sapling",
+    "minecraft:dark_oak_sapling",
+    "minecraft:spruce_sapling"
+  ]
+}

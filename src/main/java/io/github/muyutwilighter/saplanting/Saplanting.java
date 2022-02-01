@@ -9,18 +9,14 @@ import net.minecraft.util.Identifier;
 
 public class Saplanting implements ModInitializer {
     public static class ItemTag {
-        public static final Tag<Item> SAPLINGS = TagFactory.ITEM.create(new Identifier("saplanting", "saplings"));
-        public static final Tag<Item> SAPLINGS_OVERWORLD = TagFactory.ITEM.create(new Identifier("saplanting", "saplings/overworld"));
-        public static final Tag<Item> SAPLINGS_NETHER = TagFactory.ITEM.create(new Identifier("saplanting", "saplings/nether"));
-        public static final Tag<Item> SAPLINGS_LARGE = TagFactory.ITEM.create(new Identifier("saplanting", "saplings/overworld_large"));
+        public static final Tag<Item> SAPLINGS_LARGE = TagFactory.ITEM.create(new Identifier("saplanting", "large2x2"));
     }
 
     public static class BlockTag {
-        public static final Tag<Block> BASE_OVERWORLD = TagFactory.BLOCK.create(new Identifier("saplanting", "base/overworld"));
-        public static final Tag<Block> BASE_NETHER = TagFactory.BLOCK.create(new Identifier("saplanting", "base/nether"));
         public static final Tag<Block> REPLACEABLE = TagFactory.BLOCK.create(new Identifier("saplanting", "replaceable"));
         public static final Tag<Block> OTHERTREE = TagFactory.BLOCK.create(new Identifier("saplanting", "othertree"));
     }
+
     @Override
     public void onInitialize() {
         Config.load();

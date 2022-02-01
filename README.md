@@ -1,5 +1,6 @@
 # Saplanting(Fabric)
 A fabric mod that automatically plants sapling drops in minecraft games.
+Saplings from other mods are supported theoretically.
 Available for Minecraft 1.18.1
 This is a fabric mod, fabric api is required.
 
