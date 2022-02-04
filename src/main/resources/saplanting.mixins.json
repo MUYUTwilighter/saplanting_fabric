@@ -4,7 +4,8 @@
   "package": "io.github.muyutwilighter.saplanting.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "ItemEntityMixin"
+    "ItemEntityMixin",
+    "SaplingBlockAccessor"
   ],
   "client": [
   ],

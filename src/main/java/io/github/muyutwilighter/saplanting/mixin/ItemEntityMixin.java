@@ -3,15 +3,17 @@ package io.github.muyutwilighter.saplanting.mixin;
 import io.github.muyutwilighter.saplanting.Config;
 import io.github.muyutwilighter.saplanting.Saplanting;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
+import net.minecraft.block.LeavesBlock;
 import net.minecraft.block.SaplingBlock;
+import net.minecraft.block.sapling.LargeTreeSaplingGenerator;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.item.*;
-import net.minecraft.tag.Tag;
+import net.minecraft.tag.BlockTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -23,7 +25,8 @@ public abstract class ItemEntityMixin
 extends Entity {
     @Shadow public abstract ItemStack getStack();
 
-    public int plantAge;
+    @Shadow @Final public float uniqueOffset;
+    private int plantAge;
 
     public ItemEntityMixin(EntityType<?> type, World world) {
         super(type, world);
@@ -31,7 +34,7 @@ extends Entity {
 
     @Inject(method = "tick", at = @At("TAIL"))
     public void tick(CallbackInfo ci) {
-        if (Config.plantEnable) {
+        if (Config.getPlantEnable()) {
             // schedule planting
             if (this.plantable()) { // if OK to plant, plus age
                 ++this.plantAge;
@@ -40,37 +43,23 @@ extends Entity {
             }
 
             // if age reach plant delay, do planting
-            if (this.plantAge >= Config.plantDelay) {
+            if (this.plantAge >= Config.getPlantDelay()) {
                 this.plantAge = 0;  // reset age
+
                 // plant 2x2 tree
-                if (Config.plantLarge && this.getStack().isIn(Saplanting.ItemTag.SAPLINGS_LARGE) && this.getStack().getCount() >= 4) {
-                    if (this.spaceOK(this.getBlockPos(), this.getBlockPos().add(1, 0, 1))) {
-                        this.fillBlockState(
-                                this.getBlockPos(), this.getBlockPos().add(1, 0, 1),
-                                ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState()
-                        );
-                        this.getStack().setCount(this.getStack().getCount() - 4);
-                    } else if (this.spaceOK(this.getBlockPos().add(-1, 0, 0), this.getBlockPos().add(0, 0, 1))) {
-                        this.fillBlockState(
-                                this.getBlockPos().add(-1, 0, 0), this.getBlockPos().add(0, 0, 1),
-                                ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState()
-                        );
-                        this.getStack().setCount(this.getStack().getCount() - 4);
-                    } else if (this.spaceOK(this.getBlockPos().add(-1, 0, -1), this.getBlockPos())) {
-                        this.fillBlockState(
-                                this.getBlockPos().add(-1, 0, -1), this.getBlockPos(),
-                                ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState()
-                        );
-                        this.getStack().setCount(this.getStack().getCount() - 4);
-                    } else if (this.spaceOK(this.getBlockPos().add(0, 0, -1), this.getBlockPos().add(1, 0, 0))) {
-                        this.fillBlockState(
-                                this.getBlockPos().add(0, 0, -1), this.getBlockPos().add(1, 0, 0),
-                                ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState()
-                        );
-                        this.getStack().setCount(this.getStack().getCount() - 4);
+                if (Config.getPlantLarge()
+                        && ((SaplingBlockAccessor) ((BlockItem) this.getStack().getItem()).getBlock()).getGenerator() instanceof LargeTreeSaplingGenerator
+                        && this.getStack().getCount() >= 4) {
+                    for (BlockPos pos : BlockPos.iterate(this.getBlockPos().add(-1, 0, -1), this.getBlockPos())) {
+                        if (this.spaceOK2x2(pos)) {
+                            this.fillSapling(pos);
+                            this.getStack().setCount(this.getStack().getCount() - 4);
+                            break;
+                        }
                     }
                 }
 
+                // plant 1x1 tree
                 if (this.getStack().getCount() > 0 && this.spaceOK(this.getBlockPos())) {
                     // plant at own position
                     this.world.setBlockState(this.getBlockPos(),
@@ -90,12 +79,8 @@ extends Entity {
                 // is item a sapling
                 && ((BlockItem) this.getStack().getItem()).getBlock() instanceof SaplingBlock
         ) {
-            if (Config.avoidDense > 0) {
-                if (this.areaHas(this.getBlockPos().add(-Config.avoidDense, 0, -Config.avoidDense),
-                        this.getBlockPos().add(Config.avoidDense, 0, Config.avoidDense),
-                        Saplanting.BlockTag.OTHERTREE)) {
-                    return false;
-                }
+            if (Config.getAvoidDense() > 0 && this.hasOther()) {
+                return false;
             }
             return this.spaceOK(this.getBlockPos());
         }
@@ -105,60 +90,35 @@ extends Entity {
     private boolean spaceOK(BlockPos pos) {
         return ((((SaplingBlock) ((BlockItem) this.getStack().getItem()).getBlock()).canPlaceAt(
                 ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState(), this.world, pos))
-                && this.world.getBlockState(pos).isIn(Saplanting.BlockTag.REPLACEABLE));
+                && (this.world.getBlockState(pos).isIn(BlockTags.REPLACEABLE_PLANTS)
+                || this.world.getBlockState(pos).isAir()));
     }
 
-    private boolean spaceOK(BlockPos v1, BlockPos v2) {
-        int a = v1.getX(), b, c;
-        while (a <= v2.getX()) {
-            b = v1.getY();
-            while (b <= v2.getY()) {
-                c = v1.getZ();
-                while (c <= v2.getZ()) {
-                    if (!this.spaceOK(new BlockPos(a, b, c))) {
-                        return false;
-                    }
-                    ++c;
-                }
-                ++b;
+    private boolean spaceOK2x2(BlockPos pos) {
+        for (BlockPos tmpos : BlockPos.iterate(pos, pos.add(1, 0, 1))) {
+            if (!this.spaceOK(tmpos)) {
+                return false;
             }
-            ++a;
         }
         return true;
     }
 
-    private boolean areaHas(BlockPos v1, BlockPos v2, Tag<Block> tag) {
-        int a = v1.getX(), b, c;
-        while (a <= v2.getX()) {
-            b = v1.getY();
-            while (b <= v2.getY()) {
-                c = v1.getZ();
-                while (c <= v2.getZ()) {
-                    if (this.world.getBlockState(new BlockPos(a, b, c)).isIn(tag)) {
-                        return true;
-                    }
-                    ++c;
-                }
-                ++b;
+    private boolean hasOther() {
+        for (BlockPos pos : BlockPos.iterateOutwards(this.getBlockPos(),
+                Config.getAvoidDense(), Config.getAvoidDense(), Config.getAvoidDense())) {
+            if (this.world.getBlockState(pos).getBlock() instanceof LeavesBlock
+                    || this.world.getBlockState(pos).getBlock() instanceof SaplingBlock
+                    || this.world.getBlockState(pos).isIn(BlockTags.LOGS)) {
+                return true;
             }
-            ++a;
         }
         return false;
     }
 
-    private void fillBlockState(BlockPos v1, BlockPos v2, BlockState blockState) {
-        int a = v1.getX(), b, c;
-        while (a <= v2.getX()) {
-            b = v1.getY();
-            while (b <= v2.getY()) {
-                c = v1.getZ();
-                while (c <= v2.getZ()) {
-                    this.world.setBlockState(new BlockPos(a, b, c), blockState, Block.NOTIFY_ALL);
-                    ++c;
-                }
-                ++b;
-            }
-            ++a;
+    private void fillSapling(BlockPos pos) {
+        for (BlockPos tmpos : BlockPos.iterate(pos, pos.add(1, 0, 1))) {
+            this.world.setBlockState(tmpos,
+                    ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState());
         }
     }
 }
