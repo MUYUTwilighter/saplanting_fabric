@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
+import java.util.Set;
 
 public class Config {
     private static final Config CONFIG = new Config();
@@ -17,6 +18,18 @@ public class Config {
     private int plantDelay = 40;
     private final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("saplanting.properties");
     private final Properties properties = new Properties();
+
+    public static Set<String> stringPropertyNames() {
+        return CONFIG.properties.stringPropertyNames();
+    }
+
+    public static String stringPropertyValue(String key) {
+        return CONFIG.properties.getProperty(key);
+    }
+
+    public static String stringPath() {
+        return CONFIG.CONFIG_PATH.toString();
+    }
 
     public static boolean getPlantEnable() {
         return CONFIG.plantEnable;
@@ -62,7 +75,7 @@ public class Config {
         try {
             this.avoidDense = Integer.parseInt(avoidDense);
             if (this.avoidDense < 0) {
-                this.avoidDense = 2;
+                this.avoidDense = 3;
             }
         } catch (Exception ignore) {}
     }
@@ -77,31 +90,14 @@ public class Config {
     }
 
     private Config() {
-        if (!Files.exists(CONFIG_PATH)) {
-            // try to create new config file
-            try {
-                Files.createFile(CONFIG_PATH);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else {
-            // try to read properties from file
-            try (InputStream inputStream = Files.newInputStream(CONFIG_PATH)) {
-                properties.load(inputStream);
-                // set properties
-                setPlantEnable(properties.getProperty("plantEnable"));
-                setPlantLarge(properties.getProperty("plantLarge"));
-                setPlantDelay(properties.getProperty("plantDelay"));
-                setAvoidDense(properties.getProperty("avoidDense"));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        loadFromFile();
         // dump setting into file (correct typo)
         save();
     }
 
     private void save() {
+        properties.clear();
+
         // dump current properties
         properties.setProperty("plantEnable", String.valueOf(plantEnable));
         properties.setProperty("plantLarge", String.valueOf(plantLarge));
@@ -127,5 +123,32 @@ public class Config {
 
     public static void saveConfig() {
         CONFIG.save();
+    }
+
+    private void loadFromFile() {
+        if (!Files.exists(CONFIG_PATH)) {
+            // try to create new config file
+            try {
+                Files.createFile(CONFIG_PATH);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            // try to read properties from file
+            try (InputStream inputStream = Files.newInputStream(CONFIG_PATH)) {
+                properties.load(inputStream);
+                // set properties
+                setPlantEnable(properties.getProperty("plantEnable"));
+                setPlantLarge(properties.getProperty("plantLarge"));
+                setPlantDelay(properties.getProperty("plantDelay"));
+                setAvoidDense(properties.getProperty("avoidDense"));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void load() {
+        CONFIG.loadFromFile();
     }
 }
