@@ -21,7 +21,7 @@ Config files is located at ".../.minecraft/config/saplanting.properties"
 
 **Command**
 
-All the commands require admin-permission to execute
+All the commands require admin-permission to execute, feedback only supports Simplified Chinese originally.
 
  - /saplanting: show all current properties;
  - /saplanting load: load properties from file;
@@ -35,4 +35,9 @@ All the commands require admin-permission to execute
 If you can not spare enough time and effort to plant saplings in Minecraft or the players on server are too lazy too do so, this datapack will help you!
 
 When a sapling item drops on dirt(or something else that let saplings grow), it will automatically turn into sapling block in 2 seconds. The sapling-planting will not destroy the block that already take up the place(except air and replaceable blocks).
+
+**Contact Me**
+
+GitHub: https://github.com/MUYUTwilighter/saplanting_fabric<br>
+MCMOD: https://www.mcmod.cn/class/5221.html
 
