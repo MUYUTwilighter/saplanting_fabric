@@ -27,8 +27,8 @@ All the commands require admin-permission to execute
  - /saplanting load: load properties from file;
  - /saplanting save: save current properties into file;
  - /saplanting \<PropertyName\>: show value of target property;
- - /saplanting \<PropertyName\> \<value\>: set value of target property;
- - Tip: this command will not get current properties saved into file immediately, current properties will be saved when using command "/saplanting save" or dicarding from world save.
+ - /saplanting \<PropertyName\> \<value\>: set value of target property;<br>
+ Tip: this command will not get current properties saved into file immediately, current properties will be saved when using command "/saplanting save" or dicarding from world save.
 
 **Brief**
 
