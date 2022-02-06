@@ -14,21 +14,21 @@ This is a fabric mod, fabric api is required.
 
 Config files is located at ".../.minecraft/config/saplanting.properties"
 
-plantDelay: How many ticks before the sapling drop will be planted, default: 40, expect: nonnegative integers
-avoidDense: The radius of area that will not plant when selected area already got other trees, default: 2, expect nonnegative integers
-plantEnable: Enable auto-planting, default: true, expect: boolean
-plantLarge: Try to plant 2x2 trees, defaut: true, expect: boolean
+ - plantDelay: How many ticks before the sapling drop will be planted, default: 40, expect: nonnegative integers
+ - avoidDense: The radius of area that will not plant when selected area already got other trees, default: 2, expect nonnegative integers
+ - plantEnable: Enable auto-planting, default: true, expect: boolean
+ - plantLarge: Try to plant 2x2 trees, defaut: true, expect: boolean
 
 **Command**
 
 All the commands require admin-permission to execute
 
-/saplanting: show all current properties;
-/saplanting load: load properties from file;
-/saplanting save: save current properties into file;
-/saplanting \<PropertyName\>: show value of target property;
-/saplanting \<PropertyName\> \<value\>: set value of target property;
-Tip: this command will not get current properties saved into file immediately, current properties will be saved when using command "/saplanting save" or dicarding from world save.
+ - /saplanting: show all current properties;
+ - /saplanting load: load properties from file;
+ - /saplanting save: save current properties into file;
+ - /saplanting \<PropertyName\>: show value of target property;
+ - /saplanting \<PropertyName\> \<value\>: set value of target property;
+ - Tip: this command will not get current properties saved into file immediately, current properties will be saved when using command "/saplanting save" or dicarding from world save.
 
 **Brief**
 
