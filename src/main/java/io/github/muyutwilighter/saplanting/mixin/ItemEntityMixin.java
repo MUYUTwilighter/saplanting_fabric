@@ -1,19 +1,19 @@
 package io.github.muyutwilighter.saplanting.mixin;
 
 import io.github.muyutwilighter.saplanting.Config;
-import io.github.muyutwilighter.saplanting.Saplanting;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.LeavesBlock;
 import net.minecraft.block.SaplingBlock;
 import net.minecraft.block.sapling.LargeTreeSaplingGenerator;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.*;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -25,8 +25,7 @@ public abstract class ItemEntityMixin
 extends Entity {
     @Shadow public abstract ItemStack getStack();
 
-    @Shadow @Final public float uniqueOffset;
-    private int plantAge;
+    private int plantAge = 0;
 
     public ItemEntityMixin(EntityType<?> type, World world) {
         super(type, world);
@@ -43,7 +42,7 @@ extends Entity {
             }
 
             // if age reach plant delay, do planting
-            if (this.plantAge >= Config.getPlantDelay()) {
+            if (this.plantAge >= Config.getPlantDelay() && this.plantable()) {
                 this.plantAge = 0;  // reset age
 
                 // plant 2x2 tree
@@ -51,8 +50,8 @@ extends Entity {
                         && ((SaplingBlockAccessor) ((BlockItem) this.getStack().getItem()).getBlock()).getGenerator() instanceof LargeTreeSaplingGenerator
                         && this.getStack().getCount() >= 4) {
                     for (BlockPos pos : BlockPos.iterate(this.getBlockPos().add(-1, 0, -1), this.getBlockPos())) {
-                        if (this.spaceOK2x2(pos)) {
-                            this.fillSapling(pos);
+                        if (spaceOK2x2(this.world, pos, ((SaplingBlock) ((BlockItem) this.getStack().getItem()).getBlock()))) {
+                            fillSapling(this.world, pos, ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState());
                             this.getStack().setCount(this.getStack().getCount() - 4);
                             break;
                         }
@@ -60,7 +59,9 @@ extends Entity {
                 }
 
                 // plant 1x1 tree
-                if (this.getStack().getCount() > 0 && this.spaceOK(this.getBlockPos())) {
+                if (this.getStack().getCount() > 0
+                        && spaceOK(this.world, this.getBlockPos()
+                        , ((SaplingBlock) ((BlockItem) this.getStack().getItem()).getBlock()))) {
                     // plant at own position
                     this.world.setBlockState(this.getBlockPos(),
                             ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState(),
@@ -79,47 +80,55 @@ extends Entity {
                 // is item a sapling
                 && ((BlockItem) this.getStack().getItem()).getBlock() instanceof SaplingBlock
         ) {
-            if (Config.getAvoidDense() > 0 && this.hasOther()) {
+            if (Config.getPlayerAround() > 0 && playerAround(this.world, this.getBlockPos())) {
                 return false;
             }
-            return this.spaceOK(this.getBlockPos());
+            if (Config.getAvoidDense() > 0 && hasOther(this.world, this.getBlockPos())) {
+                return false;
+            }
+            return spaceOK(this.world, this.getBlockPos(), ((SaplingBlock) ((BlockItem) this.getStack().getItem()).getBlock()));
         }
         return false;
     }
 
-    private boolean spaceOK(BlockPos pos) {
-        return ((((SaplingBlock) ((BlockItem) this.getStack().getItem()).getBlock()).canPlaceAt(
-                ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState(), this.world, pos))
-                && (this.world.getBlockState(pos).isIn(BlockTags.REPLACEABLE_PLANTS)
-                || this.world.getBlockState(pos).isAir()));
+    private static boolean spaceOK(World world, BlockPos pos, SaplingBlock sapling) {
+        return sapling.canPlaceAt(sapling.getDefaultState(), world, pos);
     }
 
-    private boolean spaceOK2x2(BlockPos pos) {
+    private static boolean spaceOK2x2(World world, BlockPos pos, SaplingBlock sapling) {
         for (BlockPos tmpos : BlockPos.iterate(pos, pos.add(1, 0, 1))) {
-            if (!this.spaceOK(tmpos)) {
+            if (!spaceOK(world, tmpos, sapling)) {
                 return false;
             }
         }
         return true;
     }
 
-    private boolean hasOther() {
-        for (BlockPos pos : BlockPos.iterateOutwards(this.getBlockPos(),
+    private static boolean hasOther(World world, BlockPos target) {
+        for (BlockPos pos : BlockPos.iterateOutwards(target,
                 Config.getAvoidDense(), Config.getAvoidDense(), Config.getAvoidDense())) {
-            if (this.world.getBlockState(pos).getBlock() instanceof LeavesBlock
-                    || this.world.getBlockState(pos).getBlock() instanceof SaplingBlock
-                    || this.world.getBlockState(pos).isIn(BlockTags.LOGS)) {
+            if (world.getBlockState(pos).getBlock() instanceof LeavesBlock
+                    || world.getBlockState(pos).getBlock() instanceof SaplingBlock
+                    || world.getBlockState(pos).isIn(BlockTags.LOGS)) {
                 return true;
             }
         }
         return false;
     }
 
-    private void fillSapling(BlockPos pos) {
+    private static void fillSapling(World world, BlockPos pos, BlockState blockState) {
         for (BlockPos tmpos : BlockPos.iterate(pos, pos.add(1, 0, 1))) {
-            this.world.setBlockState(tmpos,
-                    ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState());
+            world.setBlockState(tmpos, blockState);
         }
+    }
+
+    private static boolean playerAround(World world, BlockPos pos) {
+        for (PlayerEntity player : world.getPlayers()) {
+            if (player.getBlockPos().getManhattanDistance(pos) <= Config.getPlayerAround()) {
+                return true;
+            }
+        }
+        return false;
     }
 }
 

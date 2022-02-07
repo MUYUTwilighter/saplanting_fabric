@@ -16,6 +16,7 @@ public class Config {
     private boolean plantLarge = true;
     private int avoidDense = 3;
     private int plantDelay = 40;
+    private int playerAround = 3;
     private final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("saplanting.properties");
     private final Properties properties = new Properties();
 
@@ -47,6 +48,10 @@ public class Config {
         return CONFIG.plantDelay;
     }
 
+    public static int getPlayerAround() {
+        return  CONFIG.playerAround;
+    }
+
     public static void setPlantEnable(boolean plantEnable) {
         CONFIG.plantEnable = plantEnable;
     }
@@ -61,6 +66,10 @@ public class Config {
 
     public static void setPlantDelay(int plantDelay) {
         CONFIG.plantDelay = plantDelay;
+    }
+
+    public static void setPlayerAround(int playerAround) {
+        CONFIG.playerAround = playerAround;
     }
 
     private void setPlantEnable(String plantEnable) {
@@ -89,6 +98,15 @@ public class Config {
         } catch (Exception ignore) {}
     }
 
+    private void setPlayerAround(String playerAround) {
+        try {
+            this.playerAround = Integer.parseInt(playerAround);
+            if (this.playerAround < 0) {
+                this.playerAround = 40;
+            }
+        } catch (Exception ignore) {}
+    }
+
     private Config() {
         loadFromFile();
         // dump setting into file (correct typo)
@@ -103,6 +121,7 @@ public class Config {
         properties.setProperty("plantLarge", String.valueOf(plantLarge));
         properties.setProperty("avoidDense", String.valueOf(avoidDense));
         properties.setProperty("plantDelay", String.valueOf(plantDelay));
+        properties.setProperty("playerAround", String.valueOf(playerAround));
 
         // in case config file disappear
         if (!Files.exists(CONFIG_PATH)) {
@@ -142,6 +161,7 @@ public class Config {
                 setPlantLarge(properties.getProperty("plantLarge"));
                 setPlantDelay(properties.getProperty("plantDelay"));
                 setAvoidDense(properties.getProperty("avoidDense"));
+                setPlayerAround(properties.getProperty("playerAround"));
             } catch (Exception e) {
                 e.printStackTrace();
             }

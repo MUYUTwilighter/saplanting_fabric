@@ -42,6 +42,7 @@ public class SaplantingCommand {
         target.sendFeedback(new TranslatableText(" - plantLarge:  " + Config.getPlantLarge()), false);
         target.sendFeedback(new TranslatableText(" - plantDelay:  " + Config.getPlantDelay()), false);
         target.sendFeedback(new TranslatableText(" - avoidDense:  " + Config.getAvoidDense()), false);
+        target.sendFeedback(new TranslatableText(" - playerAround:  " + Config.getPlayerAround()), false);
 
         return 1;
     }
@@ -82,6 +83,22 @@ public class SaplantingCommand {
                     throw new Exception("Input is not nonnegative");
                 }
                 Config.setAvoidDense(tmp);
+                source.sendFeedback(new TranslatableText(name)
+                                .append(new TranslatableText("saplanting.commands.saplanting.property.set.success")
+                                        .append(new TranslatableText(value)))
+                        , false);
+            } catch (Exception e) {
+                e.printStackTrace();
+                source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.property.set.fail"), false);
+                return 0;
+            }
+        } else if (Objects.equals(name, "playerAround")) {
+            try {
+                int tmp = Integer.parseInt(value);
+                if (tmp < 0) {
+                    throw new Exception("Input is not nonnegative");
+                }
+                Config.setPlayerAround(tmp);
                 source.sendFeedback(new TranslatableText(name)
                                 .append(new TranslatableText("saplanting.commands.saplanting.property.set.success")
                                         .append(new TranslatableText(value)))
