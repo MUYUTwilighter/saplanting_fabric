@@ -92,7 +92,8 @@ extends Entity {
     }
 
     private static boolean spaceOK(World world, BlockPos pos, SaplingBlock sapling) {
-        return sapling.canPlaceAt(sapling.getDefaultState(), world, pos);
+        return sapling.canPlaceAt(sapling.getDefaultState(), world, pos)
+                && world.getBlockState(pos).getMaterial().isReplaceable();
     }
 
     private static boolean spaceOK2x2(World world, BlockPos pos, SaplingBlock sapling) {
