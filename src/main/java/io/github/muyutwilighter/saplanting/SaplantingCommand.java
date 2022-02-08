@@ -37,12 +37,13 @@ public class SaplantingCommand {
     }
 
     public static int showAll(ServerCommandSource target) {
-        target.sendFeedback(new TranslatableText("saplanting.commands.saplanting.showAll"), false);
-        target.sendFeedback(new TranslatableText(" - plantEnable: " + Config.getPlantEnable()), false);
-        target.sendFeedback(new TranslatableText(" - plantLarge:  " + Config.getPlantLarge()), false);
-        target.sendFeedback(new TranslatableText(" - plantDelay:  " + Config.getPlantDelay()), false);
-        target.sendFeedback(new TranslatableText(" - avoidDense:  " + Config.getAvoidDense()), false);
-        target.sendFeedback(new TranslatableText(" - playerAround:  " + Config.getPlayerAround()), false);
+        target.sendFeedback(new TranslatableText("saplanting.commands.saplanting.showAll")
+                .setStyle(Style.EMPTY.withColor(TextColor.parse("gold"))), false);
+        target.sendFeedback(new TranslatableText(" - plantEnable:  " + Config.getPlantEnable()), false);
+        target.sendFeedback(new TranslatableText(" - plantLarge:   " + Config.getPlantLarge()), false);
+        target.sendFeedback(new TranslatableText(" - plantDelay:   " + Config.getPlantDelay()), false);
+        target.sendFeedback(new TranslatableText(" - avoidDense:   " + Config.getAvoidDense()), false);
+        target.sendFeedback(new TranslatableText(" - playerAround: " + Config.getPlayerAround()), false);
 
         return 1;
     }
@@ -52,7 +53,7 @@ public class SaplantingCommand {
             Config.setPlantEnable(Boolean.parseBoolean(value));
             source.sendFeedback(new TranslatableText(name)
                             .append(new TranslatableText("saplanting.commands.saplanting.property.set.success")
-                                    .append(new TranslatableText(value)))
+                            ).append(new TranslatableText(value))
                     , false);
         } else if (Objects.equals(name, "plantLarge")) {
             Config.setPlantLarge(Boolean.parseBoolean(value));
@@ -73,7 +74,8 @@ public class SaplantingCommand {
                         , false);
             } catch (Exception e) {
                 e.printStackTrace();
-                source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.property.set.fail"), false);
+                source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.property.set.fail")
+                        .setStyle(Style.EMPTY.withColor(TextColor.parse("red"))), false);
                 return 0;
             }
         } else if (Objects.equals(name, "avoidDense")) {
@@ -89,7 +91,8 @@ public class SaplantingCommand {
                         , false);
             } catch (Exception e) {
                 e.printStackTrace();
-                source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.property.set.fail"), false);
+                source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.property.set.fail")
+                        .setStyle(Style.EMPTY.withColor(TextColor.parse("red"))), false);
                 return 0;
             }
         } else if (Objects.equals(name, "playerAround")) {
@@ -105,7 +108,8 @@ public class SaplantingCommand {
                         , false);
             } catch (Exception e) {
                 e.printStackTrace();
-                source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.property.set.fail"), false);
+                source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.property.set.fail")
+                        .setStyle(Style.EMPTY.withColor(TextColor.parse("red"))), false);
                 return 0;
             }
         }
@@ -115,9 +119,18 @@ public class SaplantingCommand {
     public static int loadProperty(ServerCommandSource source) {
         try {
             Config.load();
-            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.load.success"), false);
+            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.load.success.head")
+                    .append(new TranslatableText("saplanting.commands.saplanting.load.success.suggestCommand")
+                            .setStyle(Style.EMPTY
+                                    .withUnderline(true).withColor(TextColor.parse("green"))
+                                    .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/saplanting"))
+                                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                            new TranslatableText("saplanting.commands.saplanting.load.success.suggestEvent"))))
+                    ).append(new TranslatableText("saplanting.commands.saplanting.load.success.tail")
+                    ), false);
         } catch (Exception e) {
-            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.load.fail"), false);
+            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.load.fail")
+                    .setStyle(Style.EMPTY.withColor(TextColor.parse("red"))), false);
             return 0;
         }
         return 1;
@@ -127,9 +140,15 @@ public class SaplantingCommand {
         try {
             Config.saveConfig();
             source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.save.success")
-                    .append(new TranslatableText(Config.stringPath())), false);
+                    .append(new TranslatableText(Config.stringPath()).setStyle(Style.EMPTY
+                            .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, Config.stringPath()))
+                            .withUnderline(true)
+                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT
+                                    , new TranslatableText("saplanting.commands.saplanting.save.path")))
+                    )), false);
         } catch (Exception e) {
-            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.save.fail"), false);
+            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.save.fail")
+                    .setStyle(Style.EMPTY.withColor(TextColor.parse("red"))), false);
             return 0;
         }
 

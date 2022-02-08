@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "saplanting",
-  "version": "1.0.6-alpha",
+  "version": "1.0.6-beta",
   "name": "Saplanting",
   "description": "Auto-plant saplings in minecraft games.",
   "authors": [
