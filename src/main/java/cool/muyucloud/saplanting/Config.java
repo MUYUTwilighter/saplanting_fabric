@@ -1,4 +1,4 @@
-package io.github.muyutwilighter.saplanting;
+package cool.muyucloud.saplanting;
 
 import net.fabricmc.loader.api.FabricLoader;
 import java.io.IOException;
@@ -7,26 +7,17 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
-import java.util.Set;
 
 public class Config {
     private static final Config CONFIG = new Config();
 
     private boolean plantEnable = true;
     private boolean plantLarge = true;
-    private int avoidDense = 3;
+    private int avoidDense = 2;
     private int plantDelay = 40;
-    private int playerAround = 3;
+    private int playerAround = 2;
     private final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("saplanting.properties");
     private final Properties properties = new Properties();
-
-    public static Set<String> stringPropertyNames() {
-        return CONFIG.properties.stringPropertyNames();
-    }
-
-    public static String stringPropertyValue(String key) {
-        return CONFIG.properties.getProperty(key);
-    }
 
     public static String stringPath() {
         return CONFIG.CONFIG_PATH.toString();
@@ -84,7 +75,7 @@ public class Config {
         try {
             this.avoidDense = Integer.parseInt(avoidDense);
             if (this.avoidDense < 0) {
-                this.avoidDense = 3;
+                this.avoidDense = 2;
             }
         } catch (Exception ignore) {}
     }
@@ -102,7 +93,7 @@ public class Config {
         try {
             this.playerAround = Integer.parseInt(playerAround);
             if (this.playerAround < 0) {
-                this.playerAround = 40;
+                this.playerAround = 2;
             }
         } catch (Exception ignore) {}
     }

@@ -1,4 +1,4 @@
-package io.github.muyutwilighter.saplanting.client;
+package cool.muyucloud.saplanting.client;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;

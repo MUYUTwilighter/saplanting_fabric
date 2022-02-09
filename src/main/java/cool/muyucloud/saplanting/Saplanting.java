@@ -1,6 +1,7 @@
-package io.github.muyutwilighter.saplanting;
+package cool.muyucloud.saplanting;
 
 import net.fabricmc.api.ModInitializer;
+
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.server.MinecraftServer;

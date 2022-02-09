@@ -1,29 +1,32 @@
 {
   "schemaVersion": 1,
   "id": "saplanting",
-  "version": "1.0.6-beta",
+  "version": "1.0.6-rc1",
   "name": "Saplanting",
-  "description": "Auto-plant saplings in minecraft games.",
+  "description": "A fabric mod that automatically plant sapling drops in minecraft games.",
   "authors": [
     "MUYU_Twilighter"
   ],
-  "contact": {},
+  "contact": {
+    "website": "muyucloud.cool",
+    "repo": "https://github.com/MUYUTwilighter/saplanting_fabric.git"
+  },
   "license": "LGPL-3.0",
   "icon": "assets/saplanting/icon.png",
   "environment": "*",
   "entrypoints": {
     "client": [
-      "io.github.muyutwilighter.saplanting.client.SaplantingClient"
+      "cool.muyucloud.saplanting.client.SaplantingClient"
     ],
     "main": [
-      "io.github.muyutwilighter.saplanting.Saplanting"
+      "cool.muyucloud.saplanting.Saplanting"
     ]
   },
   "mixins": [
     "saplanting.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.12.12",
+    "fabricloader": ">=0.13.1",
     "fabric": "*",
     "minecraft": "1.18.1"
   }
