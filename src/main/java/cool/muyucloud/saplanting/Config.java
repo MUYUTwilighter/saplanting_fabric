@@ -1,11 +1,14 @@
 package cool.muyucloud.saplanting;
 
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.item.Item;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Properties;
 
 public class Config {
@@ -18,6 +21,11 @@ public class Config {
     private int playerAround = 2;
     private final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("saplanting.properties");
     private final Properties properties = new Properties();
+    private final HashSet saplings = new HashSet();
+
+    public static boolean isSapling(Item item) {
+        return CONFIG.saplings.contains(item);
+    }
 
     public static String stringPath() {
         return CONFIG.CONFIG_PATH.toString();
@@ -61,6 +69,10 @@ public class Config {
 
     public static void setPlayerAround(int playerAround) {
         CONFIG.playerAround = playerAround;
+    }
+
+    public static void addSapling(Item item) {
+        CONFIG.saplings.add(item);
     }
 
     private void setPlantEnable(String plantEnable) {

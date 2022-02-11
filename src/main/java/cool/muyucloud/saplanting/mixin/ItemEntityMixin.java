@@ -80,9 +80,7 @@ extends Entity {
     private boolean plantable() {
         return this.world != null  // is world loaded
                 // is item a block
-                && this.getStack().getItem() instanceof BlockItem
-                // is item a sapling
-                && ((BlockItem) this.getStack().getItem()).getBlock() instanceof SaplingBlock
+                && Config.isSapling(this.getStack().getItem())
                 // got proper base and enough space
                 && spaceOK(this.world, this.getBlockPos(), ((SaplingBlock) ((BlockItem) this.getStack().getItem()).getBlock()));
     }

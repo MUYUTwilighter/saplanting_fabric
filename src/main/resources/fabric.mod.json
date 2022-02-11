@@ -26,7 +26,6 @@
     "saplanting.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.13.1",
     "fabric": "*",
     "minecraft": "1.18.1"
   }
