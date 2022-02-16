@@ -5,8 +5,6 @@ import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.loader.FabricLoader;
-import net.fabricmc.loader.impl.FabricLoaderImpl;
 import net.fabricmc.loader.impl.launch.FabricLauncherBase;
 import net.minecraft.block.SaplingBlock;
 import net.minecraft.item.BlockItem;
@@ -37,8 +35,9 @@ public class Saplanting implements ModInitializer {
             // register events @serverStart
             LOGGER.info("registering stop-start events.");
             ServerLifecycleEvents.SERVER_STARTED.register(this::onServerStarted);
+        } else {
+            LOGGER.info("I'm in a client! \\^o^/");
         }
-
 
         LOGGER.info("Initialized.");
     }

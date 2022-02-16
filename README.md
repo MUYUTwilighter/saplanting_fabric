@@ -1,3 +1,10 @@
+---
+title: "Saplanting(Fabric) Manual"
+author: MUYU_Twilighter
+date: 2022.2.13
+output: pdf_document
+---
+
 # Saplanting(Fabric)
 A fabric mod that automatically plants sapling drops in minecraft games.
 Saplings from other mods are supported theoretically.
@@ -28,12 +35,12 @@ All the commands require admin-permission to execute, feedback only supports Sim
  - /saplanting load: load properties from file;
  - /saplanting save: save current properties into file;
  - /saplanting \<PropertyName\>: show value of target property;
- - /saplanting \<PropertyName\> \<value\>: set value of target property;<br>
+ - /saplanting \<PropertyName\> \<value\>: set value of target property;
  Tip: this command will not get current properties saved into file immediately, current properties will be saved when using command "/saplanting save" or dicarding from world save.
 
 **Brief**
 
-If you can not spare enough time and effort to plant saplings in Minecraft or the players on server are too lazy too do so, this datapack will help you!
+If you can not spare enough time and effort to plant saplings in Minecraft or the players on server are too lazy to do so, this datapack will help you!
 
 When a sapling item drops on dirt(or something else that let saplings grow), it will automatically turn into sapling block in 2 seconds. The sapling-planting will not destroy the block that already take up the place(except air and replaceable blocks).
 

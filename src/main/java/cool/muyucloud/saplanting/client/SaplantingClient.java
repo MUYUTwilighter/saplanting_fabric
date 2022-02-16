@@ -20,7 +20,6 @@ public class SaplantingClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         if (FabricLauncherBase.getLauncher().getEnvironmentType() == EnvType.CLIENT) {
-            LOGGER.info("I'm in a client! \\^o^/");
             LOGGER.info("registering client-stared events");
             ClientLifecycleEvents.CLIENT_STARTED.register(this::onClientStarted);
         }

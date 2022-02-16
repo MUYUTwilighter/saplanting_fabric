@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "saplanting",
-  "version": "1.0.6-rc1",
+  "version": "1.0",
   "name": "Saplanting",
   "description": "A fabric mod that automatically plant sapling drops in minecraft games.",
   "authors": [
