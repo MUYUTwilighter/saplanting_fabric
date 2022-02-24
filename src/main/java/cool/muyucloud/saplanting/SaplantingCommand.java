@@ -1,18 +1,28 @@
 package cool.muyucloud.saplanting;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.command.argument.TextArgumentType;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.argument.ItemStackArgumentType;
+import net.minecraft.command.argument.ItemStringReader;
+import net.minecraft.item.Item;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.tag.ItemTags;
+import net.minecraft.tag.Tag;
+import net.minecraft.tag.TagGroup;
 import net.minecraft.text.*;
 
-import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 public class SaplantingCommand {
+
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
         // /saplanting
         final LiteralArgumentBuilder<ServerCommandSource> root = (CommandManager.literal("saplanting")
@@ -44,6 +54,20 @@ public class SaplantingCommand {
                 .then(CommandManager.argument("value", IntegerArgumentType.integer())
                         .executes(context -> setAvoidDense(context.getSource(), IntegerArgumentType.getInteger(context, "value")))));
 
+        // /saplanting blackList
+        root.then(CommandManager.literal("blackList").executes(context -> getBlackListEnable(context.getSource()))
+                .then(CommandManager.literal("enable").executes(context -> setBlackListEnable(context.getSource(), true)))
+                .then(CommandManager.literal("disable").executes(context -> setBlackListEnable(context.getSource(), false)))
+                .then(CommandManager.literal("add")
+                        .then(CommandManager.argument("item", ItemStackArgumentType.itemStack())
+                                .executes(context -> addBlackList(context.getSource(), ItemStackArgumentType.getItemStackArgument(context, "item").getItem()))))
+                .then(CommandManager.literal("remove")
+                        .then(CommandManager.argument("item", ItemStackArgumentType.itemStack())
+                                .executes(context -> removeBlackList(context.getSource()
+                                        , ItemStackArgumentType.getItemStackArgument(context, "item").getItem()))))
+                .then(CommandManager.literal("list")
+                        .executes(context -> showBlackList(context.getSource()))));
+
         // /saplanting load
         root.then(CommandManager.literal("load").executes(context -> loadProperty(context.getSource())));
 
@@ -54,16 +78,62 @@ public class SaplantingCommand {
         dispatcher.register(root);
     }
 
+    public static int showBlackList(ServerCommandSource source) {
+        if (Config.blackListLength() == 0) {
+            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.blackList.display.empty"), false);
+        } else {
+            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.blackList.display"), false);
+            source.sendFeedback(new LiteralText(Config.stringBlackList()), false);
+        }
+        return Config.blackListLength();
+    }
+
+    public static int removeBlackList(ServerCommandSource source, Item item) {
+        if (Config.inBlackList(item)) {
+            Config.rmBlackListItem(item);
+            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.blackList.remove.success"), false);
+            return 1;
+        } else {
+            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.blackList.remove.notInBlackList")
+                    .setStyle(Style.EMPTY.withColor(TextColor.parse("red"))), false);
+            return 0;
+        }
+    }
+
+    public static int addBlackList(ServerCommandSource source, Item item) {
+        if (Config.inBlackList(item)) {
+            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.blackList.add.inBlackList")
+                    .setStyle(Style.EMPTY.withColor(TextColor.parse("red"))), false);
+            return 0;
+        } else {
+            Config.addBlackListItem(item);
+            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.blackList.add.success"), false);
+            return 1;
+        }
+    }
+
     public static int showAll(ServerCommandSource target) {
         target.sendFeedback(new TranslatableText("saplanting.commands.saplanting.showAll")
                 .setStyle(Style.EMPTY.withColor(TextColor.parse("gold"))), false);
         target.sendFeedback(new TranslatableText(" - plantEnable:  " + Config.getPlantEnable()), false);
         target.sendFeedback(new TranslatableText(" - plantLarge:   " + Config.getPlantLarge()), false);
+        target.sendFeedback(new TranslatableText(" - blackList:   " + Config.getBlackListEnable()), false);
         target.sendFeedback(new TranslatableText(" - plantDelay:   " + Config.getPlantDelay()), false);
         target.sendFeedback(new TranslatableText(" - avoidDense:   " + Config.getAvoidDense()), false);
         target.sendFeedback(new TranslatableText(" - playerAround: " + Config.getPlayerAround()), false);
 
         return 1;
+    }
+
+    public static int setBlackListEnable(ServerCommandSource source, boolean value) {
+        Config.setBlackListEnable(value);
+        if (value) {
+            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.blackList.enable"), false);
+            return 1;
+        } else {
+            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.blackList.disable"), false);
+            return 0;
+        }
     }
 
     public static int setPlantEnable(ServerCommandSource source, boolean value) {
@@ -104,6 +174,15 @@ public class SaplantingCommand {
                 .append(new TranslatableText("saplanting.commands.saplanting.property.set"))
                 .append(Integer.toString(value)), false);
         return value;
+    }
+
+    public static int getBlackListEnable(ServerCommandSource source) {
+        if (Config.getBlackListEnable()) {
+            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.blackList.enable"), false);
+        } else {
+            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.blackList.disable"), false);
+        }
+        return Config.getBlackListEnable() ? 1 : 0;
     }
 
     public static int getPlantEnable(ServerCommandSource source) {

@@ -61,7 +61,7 @@ extends Entity {
                         }
                     }
 
-                    // plant 1x1 tree
+                    // plant other
                     if (this.getStack().getCount() > 0
                             && spaceOK(this.world, this.getBlockPos()
                             , ((SaplingBlock) ((BlockItem) this.getStack().getItem()).getBlock()))) {
@@ -80,7 +80,7 @@ extends Entity {
     private boolean plantable() {
         return this.world != null  // is world loaded
                 // is item a block
-                && Config.isSapling(this.getStack().getItem())
+                && Config.itemOK(this.getStack().getItem())
                 // got proper base and enough space
                 && spaceOK(this.world, this.getBlockPos(), ((SaplingBlock) ((BlockItem) this.getStack().getItem()).getBlock()));
     }

@@ -34,8 +34,14 @@ All the commands require admin-permission to execute, feedback only supports Sim
  - /saplanting: show all current properties;
  - /saplanting load: load properties from file;
  - /saplanting save: save current properties into file;
+ - /saplanting blackList: show black list enability
+ - /saplanting blackList enable: enable black list
+ - /saplanting blackList disable: disable black list
+ - /saplanting blackList list: show content of black list
+ - /saplanting blackList add \<Item\>: add item to black list
+ - /saplanting blackList remove \<Item\>: remove item from black list
  - /saplanting \<PropertyName\>: show value of target property;
- - /saplanting \<PropertyName\> \<value\>: set value of target property;
+ - /saplanting \<PropertyName\> \<value\>: set value of target property;  
  Tip: this command will not get current properties saved into file immediately, current properties will be saved when using command "/saplanting save" or dicarding from world save.
 
 **Brief**

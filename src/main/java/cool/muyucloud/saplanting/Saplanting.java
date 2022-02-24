@@ -33,7 +33,7 @@ public class Saplanting implements ModInitializer {
         if (FabricLauncherBase.getLauncher().getEnvironmentType() == EnvType.SERVER) {
             LOGGER.info("I'm in a server! Wow~");
             // register events @serverStart
-            LOGGER.info("registering stop-start events.");
+            LOGGER.info("registering server-started events.");
             ServerLifecycleEvents.SERVER_STARTED.register(this::onServerStarted);
         } else {
             LOGGER.info("I'm in a client! \\^o^/");

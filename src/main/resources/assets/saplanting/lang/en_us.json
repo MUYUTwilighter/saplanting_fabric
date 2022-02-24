@@ -10,6 +10,15 @@
   "saplanting.commands.saplanting.property.set": " 已被设置为 ",
   "saplanting.commands.saplanting.property.show": " 目前为 ",
 
+  "saplanting.commands.saplanting.blackList.enable": "已启用黑名单",
+  "saplanting.commands.saplanting.blackList.disable": "已禁用黑名单",
+  "saplanting.commands.saplanting.blackList.add.inBlackList": "该物品已存在于黑名单中",
+  "saplanting.commands.saplanting.blackList.add.success": "已成功添加到黑名单",
+  "saplanting.commands.saplanting.blackList.remove.success": "成功从黑名单移除",
+  "saplanting.commands.saplanting.blackList.remove.notInBlackList": "该物品不在黑名单中",
+  "saplanting.commands.saplanting.blackList.display": "当前黑名单：",
+  "saplanting.commands.saplanting.blackList.display.empty": "当前黑名单为空",
+
   "saplanting.commands.saplanting.save.success": "成功保存至文件",
   "saplanting.commands.saplanting.save.path": "打开文件",
   "saplanting.commands.saplanting.save.fail": "因未知原因保存失败"
