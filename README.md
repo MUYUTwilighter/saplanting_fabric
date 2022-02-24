@@ -19,13 +19,15 @@ This is a fabric mod, fabric api is required.
 
 **Configurations**
 
-Config files is located at ".../.minecraft/config/saplanting.properties"
+Config files is located at ".../.minecraft/config/saplanting.json"
 
+ - plantEnable: Enable auto-planting, default: true, expect: boolean
+ - plantLarge: Try to plant 2x2 trees, default: true, expect: boolean
+ - blackListEnable: enable black list, default: true, expect: boolean
  - plantDelay: How many ticks before the sapling drop will be planted, default: 40, expect: nonnegative integers
  - avoidDense: The radius of area that will not plant when selected area already got other trees, default: 2, expect nonnegative integers
- - plantEnable: Enable auto-planting, default: true, expect: boolean
- - plantLarge: Try to plant 2x2 trees, defaut: true, expect: boolean
  - playerAround: Not to plant if player around, default: 2, expect nonnegative integers
+ - blackList: content of black list, add item like "minecraft:oak_sapling"
 
 **Command**
 
