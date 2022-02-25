@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = project.mod_version
+version project.mod_version
 group = project.maven_group
 
 repositories {
@@ -16,7 +16,8 @@ repositories {
 
 dependencies {
     // https://mvnrepository.com/artifact/org.json/json
-    implementation group: 'org.json', name: 'json', version: '20090211'
+    include(group: 'org.json', name: 'json', version: '20090211')
+    implementation(group: 'org.json', name: 'json', version: '20090211')
     // To change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"

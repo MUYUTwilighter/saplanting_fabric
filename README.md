@@ -30,7 +30,7 @@ Config file is located at ".../.minecraft/config/saplanting.json"
 Config file will only be automatically loaded when a world-save is loaded. If you want the changes in this file loaded manually, use commands to do so.
 
  - plantEnable: Enable auto-planting, default: true, expect: boolean  
-This configuration is global.
+This configuration has the highest priority.
  - plantLarge: Try to plant 2x2 trees, default: true, expect: boolean  
 Only for sapling blocks that can be planted in shape of 2x2.
  - blackListEnable: enable black list, default: true, expect: boolean

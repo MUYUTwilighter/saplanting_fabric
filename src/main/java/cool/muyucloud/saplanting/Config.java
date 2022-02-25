@@ -89,21 +89,26 @@ public class Config {
             return false;
         }
 
-        if (((BlockItem) item).getBlock() instanceof SaplingBlock
-                && !Config.getAllowSapling()) {
-            return false;
-        } else if (((BlockItem) item).getBlock() instanceof CropBlock
-                && !Config.getAllowCrop()) {
-            return false;
-        } else if (((BlockItem) item).getBlock() instanceof MushroomBlock
-                && !Config.getAllowMushroom()) {
-            return false;
-        } else if (((BlockItem) item).getBlock() instanceof FungusBlock
-                && !Config.getAllowFungus()) {
-            return false;
-        } else if (((BlockItem) item).getBlock() instanceof FlowerBlock
-                && !Config.getAllowFlower()) {
-            return false;
+        if (((BlockItem) item).getBlock() instanceof SaplingBlock) {
+            if (!Config.getAllowSapling()) {
+                return false;
+            }
+        } else if (((BlockItem) item).getBlock() instanceof CropBlock) {
+            if (!Config.getAllowCrop()) {
+                return false;
+            }
+        } else if (((BlockItem) item).getBlock() instanceof MushroomBlock) {
+            if (!Config.getAllowMushroom()) {
+                return false;
+            }
+        } else if (((BlockItem) item).getBlock() instanceof FungusBlock) {
+            if (!Config.getAllowFungus()) {
+                return false;
+            }
+        } else if (((BlockItem) item).getBlock() instanceof FlowerBlock) {
+            if (!Config.getAllowFlower()) {
+                return false;
+            }
         } else if (!Config.getAllowOther()) {
             return false;
         }
@@ -359,13 +364,8 @@ public class Config {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            blackList.clear();
-            for (Item item : plantableItem) {
-                if (!(((BlockItem) item).getBlock() instanceof SaplingBlock)) {
-                    blackList.add(item);
-                }
-            }
         } else {
+            blackList.clear();
             // try to read properties from file
             try (InputStream inputStream = Files.newInputStream(CONFIG_PATH)) {
                 JSONObject jsonObject = new JSONObject(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8));
