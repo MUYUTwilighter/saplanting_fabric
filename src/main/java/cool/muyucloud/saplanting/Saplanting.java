@@ -1,15 +1,10 @@
 package cool.muyucloud.saplanting;
 
-import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.loader.impl.launch.FabricLauncherBase;
-import net.minecraft.block.SaplingBlock;
-import net.minecraft.item.BlockItem;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.registry.Registry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,15 +24,9 @@ public class Saplanting implements ModInitializer {
         LOGGER.info("registering stop-server events.");
         ServerLifecycleEvents.SERVER_STOPPING.register(this::onServerStopping);
 
-
-        if (FabricLauncherBase.getLauncher().getEnvironmentType() == EnvType.SERVER) {
-            LOGGER.info("I'm in a server! Wow~");
-            // register events @serverStart
-            LOGGER.info("registering server-started events.");
-            ServerLifecycleEvents.SERVER_STARTED.register(this::onServerStarted);
-        } else {
-            LOGGER.info("I'm in a client! \\^o^/");
-        }
+        // register events @serverStarted
+        LOGGER.info("registering server-started events.");
+        ServerLifecycleEvents.SERVER_STARTED.register(this::onServerStarted);
 
         LOGGER.info("Initialized.");
     }
@@ -48,9 +37,14 @@ public class Saplanting implements ModInitializer {
     }
 
     private void onServerStarted(MinecraftServer server) {
-        LOGGER.info("registering sapling items");
-        Registry.ITEM.stream()
-                .filter(item -> (item instanceof BlockItem blockItem && blockItem.getBlock() instanceof SaplingBlock))
-                .forEach(Config::addSapling);
+        LOGGER.info("Initialize Config class");
+        new Thread(() -> {
+            if (Config.getPlantEnable()) {
+                LOGGER.info("Saplanting is enabled now \\^o^/");
+            } else {
+                LOGGER.info("Saplanting is disabled QAQ");
+                LOGGER.info("Use command \"/saplanting plantEnable true\" to enable saplanting");
+            }
+        }).start();
     }
 }

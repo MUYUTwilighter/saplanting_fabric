@@ -1,15 +1,13 @@
 package cool.muyucloud.saplanting.mixin;
 
 import cool.muyucloud.saplanting.Config;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.LeavesBlock;
-import net.minecraft.block.SaplingBlock;
+import net.minecraft.block.*;
 import net.minecraft.block.sapling.LargeTreeSaplingGenerator;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.item.*;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.util.math.BlockPos;
@@ -43,18 +41,23 @@ extends Entity {
 
             // if age reach plant delay, do planting
             if (this.plantAge >= Config.getPlantDelay() && this.plantable()) {
+                BlockPos pos = this.getBlockPos();
+                if (this.getPos().getY() % 1 != 0) {
+                    pos = pos.add(0, 1, 0);
+                }
                 this.plantAge = 0;  // reset age
                 if (!(
-                        (Config.getPlayerAround() > 0 && playerAround(this.world, this.getBlockPos()))
-                        || (Config.getAvoidDense() > 0 && hasOther(this.world, this.getBlockPos()))
+                        (Config.getPlayerAround() > 0 && playerAround(this.world, pos))
+                        || (Config.getAvoidDense() > 0 && hasOther(this.world, pos))
                 )) {
                     // plant 2x2 tree
                     if (Config.getPlantLarge()
+                            && ((BlockItem) this.getStack().getItem()).getBlock() instanceof SaplingBlock
                             && ((SaplingBlockAccessor) ((BlockItem) this.getStack().getItem()).getBlock()).getGenerator() instanceof LargeTreeSaplingGenerator
                             && this.getStack().getCount() >= 4) {
-                        for (BlockPos pos : BlockPos.iterate(this.getBlockPos().add(-1, 0, -1), this.getBlockPos())) {
-                            if (spaceOK2x2(this.world, pos, ((SaplingBlock) ((BlockItem) this.getStack().getItem()).getBlock()))) {
-                                fillSapling(this.world, pos, ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState());
+                        for (BlockPos tmpos : BlockPos.iterate(pos.add(-1, 0, -1), pos)) {
+                            if (spaceOK2x2(this.world, tmpos, ((SaplingBlock) ((BlockItem) this.getStack().getItem()).getBlock()))) {
+                                fillSapling(this.world, tmpos, ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState());
                                 this.getStack().setCount(this.getStack().getCount() - 4);
                                 break;
                             }
@@ -63,10 +66,10 @@ extends Entity {
 
                     // plant other
                     if (this.getStack().getCount() > 0
-                            && spaceOK(this.world, this.getBlockPos()
-                            , ((SaplingBlock) ((BlockItem) this.getStack().getItem()).getBlock()))) {
+                            && spaceOK(this.world, pos
+                            , ((PlantBlock) ((BlockItem) this.getStack().getItem()).getBlock()))) {
                         // plant at own position
-                        this.world.setBlockState(this.getBlockPos(),
+                        this.world.setBlockState(pos,
                                 ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState(),
                                 Block.NOTIFY_ALL);
                         // minus 1 count
@@ -79,15 +82,20 @@ extends Entity {
 
     private boolean plantable() {
         return this.world != null  // is world loaded
+                // is touching ground
+                && this.onGround
                 // is item a block
-                && Config.itemOK(this.getStack().getItem())
-                // got proper base and enough space
-                && spaceOK(this.world, this.getBlockPos(), ((SaplingBlock) ((BlockItem) this.getStack().getItem()).getBlock()));
+                && Config.itemOK(this.getStack().getItem());
     }
 
-    private static boolean spaceOK(World world, BlockPos pos, SaplingBlock sapling) {
-        return sapling.canPlaceAt(sapling.getDefaultState(), world, pos)
-                && world.getBlockState(pos).getMaterial().isReplaceable();
+    private static boolean spaceOK(World world, BlockPos pos, PlantBlock block) {
+        if (block instanceof FluidFillable) {
+            return world.getBlockState(pos).getFluidState().isOf(Fluids.WATER)
+                    && block.canPlaceAt(block.getDefaultState(), world, pos);
+        } else {
+            return block.canPlaceAt(block.getDefaultState(), world, pos)
+                    && world.getBlockState(pos).getMaterial().isReplaceable();
+        }
     }
 
     private static boolean spaceOK2x2(World world, BlockPos pos, SaplingBlock sapling) {

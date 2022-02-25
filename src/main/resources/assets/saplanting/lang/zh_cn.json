@@ -12,7 +12,7 @@
 
   "saplanting.commands.saplanting.blackList.enable": "已启用黑名单",
   "saplanting.commands.saplanting.blackList.disable": "已禁用黑名单",
-  "saplanting.commands.saplanting.blackList.add.inBlackList": "该物品已存在于黑名单中",
+  "saplanting.commands.saplanting.blackList.add.inBlackList": "该物品已在黑名单中",
   "saplanting.commands.saplanting.blackList.add.success": "已成功添加到黑名单",
   "saplanting.commands.saplanting.blackList.remove.success": "成功从黑名单移除",
   "saplanting.commands.saplanting.blackList.remove.notInBlackList": "该物品不在黑名单中",
