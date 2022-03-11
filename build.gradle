@@ -16,8 +16,6 @@ repositories {
 
 dependencies {
     // https://mvnrepository.com/artifact/org.json/json
-    include(group: 'org.json', name: 'json', version: '20090211')
-    implementation(group: 'org.json', name: 'json', version: '20090211')
     // To change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
@@ -44,7 +42,7 @@ tasks.withType(JavaCompile).configureEach {
     // If Javadoc is generated, this must be specified in that task too.
     it.options.encoding = "UTF-8"
     if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
-        it.options.release = targetJavaVersion as Property<Integer>
+        it.options.release = targetJavaVersion
     }
 }
 

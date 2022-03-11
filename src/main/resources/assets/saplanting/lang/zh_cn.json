@@ -7,6 +7,10 @@
   "saplanting.commands.saplanting.load.success.suggestEvent": "键入指令",
   "saplanting.commands.saplanting.load.fail": "因未知原因加载失败",
 
+  "saplanting.commands.saplanting.load.property.succuess": "成功从文件加载指定配置：",
+  "saplanting.commands.saplanting.load.property.fail": "因未知原因加载失败",
+  "saplanting.commands.saplanting.load.property.success.suggestEvent": "查看该配置当前值",
+
   "saplanting.commands.saplanting.property.set": " 已被设置为 ",
   "saplanting.commands.saplanting.property.show": " 目前为 ",
 

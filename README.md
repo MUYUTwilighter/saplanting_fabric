@@ -55,6 +55,7 @@ All the changes made by commands will not be saved to config file immediately. I
 
 ### Configure File IO
  - /saplanting load: load properties from file;
+ - /saplanting load <PropertyName>: load target property from file;
  - /saplanting save: save current properties into file.
 
 ### Black List  
@@ -73,7 +74,7 @@ And vice versa.
  - /saplanting \<PropertyName\> \<value\>: set value of target property.
 
 ## Contact Me
-
+buy me a coffee：https://afdian.net/@muyucloud  
 Chat Group from QQ: https://t.bilibili.com/563537522129988306  
 CurseForge: https://www.curseforge.com/minecraft/mc-mods/saplanting  
 GitHub: https://github.com/MUYUTwilighter/saplanting_fabric  

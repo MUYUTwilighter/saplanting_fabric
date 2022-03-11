@@ -1,14 +1,14 @@
 package cool.muyucloud.saplanting;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.*;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Objects;
 
 public class Config {
     private static final Config CONFIG = new Config();
@@ -78,6 +79,10 @@ public class Config {
 
     public static void load() {
         CONFIG.loadFromFile();
+    }
+
+    public static boolean load(String name) {
+        return CONFIG.loadFromFile(name);
     }
 
     public static void saveConfig() {
@@ -224,121 +229,122 @@ public class Config {
         CONFIG.playerAround = playerAround;
     }
 
-    private void initPlantEnable(JSONObject jsonObject) {
+    private boolean initPlantEnable(JsonObject jsonObject) {
         try {
-            this.plantEnable = jsonObject.getBoolean("plantEnable");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+            this.plantEnable = jsonObject.get("plantEnable").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initPlantLarge(JSONObject jsonObject) {
+    private boolean initPlantLarge(JsonObject jsonObject) {
         try {
-            this.plantLarge = jsonObject.getBoolean("plantLarge");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+            this.plantLarge = jsonObject.get("plantLarge").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initBlackListEnable(JSONObject jsonObject) {
+    private boolean initBlackListEnable(JsonObject jsonObject) {
         try {
-            this.blackListEnable = jsonObject.getBoolean("blackListEnable");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+            this.blackListEnable = jsonObject.get("blackListEnable").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initAllowSapling(JSONObject jsonObject) {
+    private boolean initAllowSapling(JsonObject jsonObject) {
         try {
-            this.allowSapling = jsonObject.getBoolean("allowSapling");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+            this.allowSapling = jsonObject.get("allowSapling").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initAllowCrop(JSONObject jsonObject) {
+    private boolean initAllowCrop(JsonObject jsonObject) {
         try {
-            this.allowCrop = jsonObject.getBoolean("allowCrop");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+            this.allowCrop = jsonObject.get("allowCrop").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initAllowMushroom(JSONObject jsonObject) {
+    private boolean initAllowMushroom(JsonObject jsonObject) {
         try {
-            this.allowMushroom = jsonObject.getBoolean("allowMushroom");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+            this.allowMushroom = jsonObject.get("allowMushroom").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initAllowFungus(JSONObject jsonObject) {
+    private boolean initAllowFungus(JsonObject jsonObject) {
         try {
-            this.allowFungus = jsonObject.getBoolean("allowFungus");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+            this.allowFungus = jsonObject.get("allowFungus").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initAllowFlower(JSONObject jsonObject) {
+    private boolean initAllowFlower(JsonObject jsonObject) {
         try {
-            this.allowFlower = jsonObject.getBoolean("allowFlower");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+            this.allowFlower = jsonObject.get("allowFlower").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initAllowOther(JSONObject jsonObject) {
+    private boolean initAllowOther(JsonObject jsonObject) {
         try {
-            this.allowOther = jsonObject.getBoolean("allowOther");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+            this.allowOther = jsonObject.get("allowOther").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initPlantDelay(JSONObject jsonObject) {
+    private boolean initPlantDelay(JsonObject jsonObject) {
         try {
-            this.plantDelay = jsonObject.getInt("plantDelay");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+            this.plantDelay = jsonObject.get("plantDelay").getAsInt();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initAvoidDense(JSONObject jsonObject) {
+    private boolean initAvoidDense(JsonObject jsonObject) {
         try {
-            this.avoidDense = jsonObject.getInt("avoidDense");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+            this.avoidDense = jsonObject.get("avoidDense").getAsInt();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initPlayerAround(JSONObject jsonObject) {
+    private boolean initPlayerAround(JsonObject jsonObject) {
         try {
-            this.playerAround = jsonObject.getInt("playerAround");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+            this.playerAround = jsonObject.get("playerAround").getAsInt();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initBlackList(JSONObject jsonObject) {
+    private boolean initBlackList(JsonObject jsonObject) {
         blackList.clear();
-        JSONArray jsonArray = null;
+        JsonArray jsonArray;
 
         try {
-            jsonArray = jsonObject.getJSONArray("blackList");
+            jsonArray = jsonObject.get("blackList").getAsJsonArray();
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
 
         if (jsonArray == null) {
-            return;
+            return true;
         }
 
-        JSONArray finalJsonArray = jsonArray;
+        JsonArray finalJsonArray = jsonArray;
         new Thread(() -> {
-            for (int i = 0; i < finalJsonArray.length(); i++) {
+            for (int i = 0; i < finalJsonArray.size(); i++) {
                 try {
-                    Item item = Registry.ITEM.get(new Identifier(finalJsonArray.getString(i)));
+                    Item item = Registry.ITEM.get(new Identifier(finalJsonArray.get(i).getAsString()));
                     if (isValidItem(item)) {
                         blackList.add(item);
                     }
@@ -347,6 +353,7 @@ public class Config {
                 }
             }
         }).start();
+        return true;
     }
 
     private boolean isValidItem(Item item) {
@@ -437,7 +444,8 @@ public class Config {
         } else {
             // try to read properties from file
             try (InputStream inputStream = Files.newInputStream(CONFIG_PATH)) {
-                JSONObject jsonObject = new JSONObject(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8));
+                Gson gson = new Gson();
+                JsonObject jsonObject = gson.fromJson(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8), JsonObject.class);
 
                 initPlantEnable(jsonObject);
                 initPlantLarge(jsonObject);
@@ -457,5 +465,46 @@ public class Config {
                 e.printStackTrace();
             }
         }
+    }
+
+    private boolean loadFromFile(String name) {
+        if (Files.exists(CONFIG_PATH)) {
+            // try to read properties from file
+            try (InputStream inputStream = Files.newInputStream(CONFIG_PATH)) {
+                Gson gson = new Gson();
+                JsonObject jsonObject = gson.fromJson(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8), JsonObject.class);
+
+                if (Objects.equals(name, "plantEnable")) {
+                    return initPlantEnable(jsonObject);
+                } else if (Objects.equals(name, "plantLarge")) {
+                    return initPlantLarge(jsonObject);
+                } else if (Objects.equals(name, "blackListEnable")) {
+                    return initBlackListEnable(jsonObject);
+                } else if (Objects.equals(name, "allowSapling")) {
+                    return initAllowSapling(jsonObject);
+                } else if (Objects.equals(name, "allowCrop")) {
+                    return initAllowCrop(jsonObject);
+                } else if (Objects.equals(name, "allowMushroom")) {
+                    return initAllowMushroom(jsonObject);
+                } else if (Objects.equals(name, "allowFungus")) {
+                    return initAllowFungus(jsonObject);
+                } else if (Objects.equals(name, "allowFlower")) {
+                    return initAllowFlower(jsonObject);
+                } else if (Objects.equals(name, "allowOther")) {
+                    return initAllowOther(jsonObject);
+                } else if (Objects.equals(name, "plantDelay")) {
+                    return initPlantDelay(jsonObject);
+                } else if (Objects.equals(name, "avoidDense")) {
+                    return initAvoidDense(jsonObject);
+                } else if (Objects.equals(name, "playerAround")) {
+                    return initPlayerAround(jsonObject);
+                } else if (Objects.equals(name, "blackList")) {
+                    return initBlackList(jsonObject);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
     }
 }

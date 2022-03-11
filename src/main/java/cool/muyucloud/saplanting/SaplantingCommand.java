@@ -89,8 +89,35 @@ public class SaplantingCommand {
                 .then(CommandManager.literal("clear")
                         .executes(context -> clearBlackList(context.getSource()))));
 
+        // /saplanting load <Property>
+        LiteralArgumentBuilder<ServerCommandSource> load = CommandManager.literal("load").executes(context -> loadProperty(context.getSource()));
+        load.then(CommandManager.literal("plantEnable")
+                .executes(context -> loadProperty(context.getSource(), "plantEnable")));
+        load.then(CommandManager.literal("plantLarge")
+                .executes(context -> loadProperty(context.getSource(), "plantLarge")));
+        load.then(CommandManager.literal("blackListEnable")
+                .executes(context -> loadProperty(context.getSource(), "blackListEnable")));
+        load.then(CommandManager.literal("allowSapling")
+                .executes(context -> loadProperty(context.getSource(), "allowSapling")));
+        load.then(CommandManager.literal("allowCrop")
+                .executes(context -> loadProperty(context.getSource(), "allowCrop")));
+        load.then(CommandManager.literal("allowMushroom")
+                .executes(context -> loadProperty(context.getSource(), "allowMushroom")));
+        load.then(CommandManager.literal("allowFungus")
+                .executes(context -> loadProperty(context.getSource(), "allowFungus")));
+        load.then(CommandManager.literal("allowFlower")
+                .executes(context -> loadProperty(context.getSource(), "allowFlower")));
+        load.then(CommandManager.literal("allowOther")
+                .executes(context -> loadProperty(context.getSource(), "allowOther")));
+        load.then(CommandManager.literal("plantDelay")
+                .executes(context -> loadProperty(context.getSource(), "plantDelay")));
+        load.then(CommandManager.literal("avoidDense")
+                .executes(context -> loadProperty(context.getSource(), "avoidDense")));
+        load.then(CommandManager.literal("playerAround")
+                .executes(context -> loadProperty(context.getSource(), "playerAround")));
+
         // /saplanting load
-        root.then(CommandManager.literal("load").executes(context -> loadProperty(context.getSource())));
+        root.then(load);
 
         // /saplanting save
         root.then(CommandManager.literal("save").executes(context -> saveProperty(context.getSource())));
@@ -366,6 +393,23 @@ public class SaplantingCommand {
             return 0;
         }
         return 1;
+    }
+
+    public static int loadProperty(ServerCommandSource source, String name) {
+        if (Config.load(name)) {
+            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.load.property.succuess")
+                    .append(new LiteralText(name).setStyle(Style.EMPTY
+                            .withUnderline(true).withColor(TextColor.parse("green"))
+                            .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/saplanting " + name))
+                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                    new TranslatableText("saplanting.commands.saplanting.load.property.success.suggestEvent"))))
+                    ), false);
+            return 1;
+        } else {
+            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.load.property.fail")
+                    .setStyle(Style.EMPTY.withColor(TextColor.parse("red"))), false);
+            return 0;
+        }
     }
 
     public static int saveProperty(ServerCommandSource source) {

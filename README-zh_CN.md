@@ -46,10 +46,11 @@ output: pdf_document
 
 ### 查询设置  
  - /saplanting：显示当前所有设置；
- - /saplanting \<PropertyName\>：显示指定设置项的值。
+ - /saplanting \<设置项名称\>：显示指定设置项的值。
 
 ### 与设置文件交互  
  - /saplanting load：从设置文件加载所有设置；
+ - /saplanting load <设置项名称>：从设置文件加载指定设置；
  - /saplanting save：将当前设置写入设置文件。
 
 ### 黑名单  
@@ -60,14 +61,15 @@ output: pdf_document
  - /saplanting blackList enable：开启黑名单；
  - /saplanting blackList disable：禁用黑名单；
  - /saplanting blackList list：显示黑名单列表；
- - /saplanting blackList add \<Item\>：将指定物品加入黑名单；  
+ - /saplanting blackList add \<物品ID\>：将指定物品加入黑名单；  
  如果指定物品已存在于黑名单或这个物品不是植物方块，则不会加入到黑名单中。
- - /saplanting blackList remove \<Item\>：将指定物品从黑名单中移除。
+ - /saplanting blackList remove \<物品ID\>：将指定物品从黑名单中移除。
 
 ### 更改其他设置  
- - /saplanting \<PropertyName\> \<value\>：将指定设置项设置为指定值；
+ - /saplanting \<设置项名称\> \<值\>：将指定设置项设置为指定值；
 
 ## 与我联系  
+爱发电：https://afdian.net/@muyucloud  
 QQ交流群：https://t.bilibili.com/563537522129988306  
 CurseForge：https://www.curseforge.com/minecraft/mc-mods/saplanting  
 GitHub：https://github.com/MUYUTwilighter/saplanting_fabric  
