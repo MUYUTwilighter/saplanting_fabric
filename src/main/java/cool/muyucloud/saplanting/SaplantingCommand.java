@@ -397,7 +397,7 @@ public class SaplantingCommand {
 
     public static int loadProperty(ServerCommandSource source, String name) {
         if (Config.load(name)) {
-            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.load.property.succuess")
+            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.load.property.success")
                     .append(new LiteralText(name).setStyle(Style.EMPTY
                             .withUnderline(true).withColor(TextColor.parse("green"))
                             .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/saplanting " + name))

@@ -1,5 +1,6 @@
 package cool.muyucloud.saplanting;
 
+import cool.muyucloud.saplanting.mixin.ItemEntityMixin;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
@@ -23,6 +24,7 @@ public class Saplanting implements ModInitializer {
         // register events @serverStop
         LOGGER.info("registering stop-server events.");
         ServerLifecycleEvents.SERVER_STOPPING.register(this::onServerStopping);
+        ServerLifecycleEvents.SERVER_STOPPING.register(MultiThreadSignal::killThread);
 
         // register events @serverStarted
         LOGGER.info("registering server-started events.");
