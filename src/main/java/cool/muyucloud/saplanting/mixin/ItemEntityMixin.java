@@ -2,6 +2,7 @@ package cool.muyucloud.saplanting.mixin;
 
 import cool.muyucloud.saplanting.Config;
 import cool.muyucloud.saplanting.MultiThreadSignal;
+import cool.muyucloud.saplanting.Saplanting;
 import net.minecraft.block.*;
 import net.minecraft.block.sapling.LargeTreeSaplingGenerator;
 import net.minecraft.entity.Entity;
@@ -13,7 +14,6 @@ import net.minecraft.item.*;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -27,7 +27,7 @@ extends Entity {
     @Shadow public abstract ItemStack getStack();
 
     private int plantAge = 0;
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = Saplanting.getLogger();
 
     public ItemEntityMixin(EntityType<?> type, World world) {
         super(type, world);
@@ -36,29 +36,31 @@ extends Entity {
     @Inject(method = "tick", at = @At("TAIL"))
     public void tick(CallbackInfo ci) {
         if (!this.world.isClient()) {
+            if (!MultiThreadSignal.threadAlive() && !MultiThreadSignal.threadRegistered()) {
+                LOGGER.info("Creating thread for entity processing.");
+                MultiThreadSignal.registerThread(ItemEntityMixin::loop);
+                MultiThreadSignal.threadStart();
+            }
             if (Config.isPlantableItem(this.getStack().getItem())) {
                 MultiThreadSignal.addTask(this);
-            }
-            if (!MultiThreadSignal.threadAlive()) {
-                LOGGER.info("Creating thread for entity processing.");
-                if (!MultiThreadSignal.registerThread(new Thread(ItemEntityMixin::loop))) {
-                    LOGGER.info("Thread already exists! Cancelled creating.");
-                } else {
-                    MultiThreadSignal.threadStart();
-                }
             }
         }
     }
 
     private static void loop() {
         try {
-            while (true) {
+            while (!MultiThreadSignal.threadInterrupted()) {
                 if (MultiThreadSignal.taskEmpty()) {
                     Thread.sleep(1);
                 }
                 plant((ItemEntityMixin) MultiThreadSignal.popTask());
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            if (MultiThreadSignal.threadAlive()) {
+                LOGGER.error("Saplanting item entity process exits unexpectedly.");
+                e.printStackTrace();
+            }
+        }
         MultiThreadSignal.killThread();
     }
     

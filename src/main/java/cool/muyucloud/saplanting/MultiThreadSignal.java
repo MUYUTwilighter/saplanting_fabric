@@ -1,13 +1,12 @@
 package cool.muyucloud.saplanting;
 
 import net.minecraft.server.MinecraftServer;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.LinkedList;
 
 public class MultiThreadSignal {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = Saplanting.getLogger();
     private static final MultiThreadSignal SIGNAL = new MultiThreadSignal();
 
     private final LinkedList<Object> taskQueue;
@@ -22,16 +21,15 @@ public class MultiThreadSignal {
         SIGNAL.thread.start();
     }
 
-    public static boolean registerThread(Thread thread) {
+    public static void registerThread(Runnable function) {
         if (SIGNAL.thread != null) {
-            return false;
+            return;
         }
 
         SIGNAL.taskQueue.clear();
 
-        SIGNAL.thread = thread;
+        SIGNAL.thread = new Thread(function);
         SIGNAL.thread.setName("SaplantingItemEntityProcess");
-        return true;
     }
 
     public static void killThread() {
@@ -41,6 +39,7 @@ public class MultiThreadSignal {
         SIGNAL.taskQueue.clear();
         SIGNAL.thread.interrupt();
         SIGNAL.thread = null;
+        LOGGER.info("Item entity process thread has been discarded.");
     }
 
     public static void addTask(Object itemEntity) {
@@ -66,10 +65,15 @@ public class MultiThreadSignal {
     }
 
     public static boolean threadAlive() {
-        if (SIGNAL.thread == null) {
-            return false;
-        }
         return SIGNAL.thread.isAlive();
+    }
+
+    public static boolean threadInterrupted() {
+        return SIGNAL.thread.isInterrupted();
+    }
+
+    public static boolean threadRegistered() {
+        return SIGNAL.thread == null;
     }
 
     public static void killThread(MinecraftServer server) {

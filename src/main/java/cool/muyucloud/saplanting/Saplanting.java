@@ -1,6 +1,5 @@
 package cool.muyucloud.saplanting;
 
-import cool.muyucloud.saplanting.mixin.ItemEntityMixin;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
@@ -48,5 +47,9 @@ public class Saplanting implements ModInitializer {
                 LOGGER.info("Use command \"/saplanting plantEnable true\" to enable saplanting");
             }
         }).start();
+    }
+
+    public static Logger getLogger() {
+        return LOGGER;
     }
 }
