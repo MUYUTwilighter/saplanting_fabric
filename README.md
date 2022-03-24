@@ -9,7 +9,7 @@ output: pdf_document
 A fabric mod that automatically plants sapling drops in minecraft games.  
 Saplings from other mods are supported theoretically.  
 Other plants are also available, if you configure them.  
-Available for Minecraft 1.18.1  
+Make sure that your Minecraft version is supported by the mod.  
 This is a fabric mod, fabric api is required.
 
 ## Introduction

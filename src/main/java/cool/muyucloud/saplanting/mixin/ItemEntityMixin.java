@@ -1,8 +1,8 @@
 package cool.muyucloud.saplanting.mixin;
 
 import cool.muyucloud.saplanting.Config;
-import cool.muyucloud.saplanting.MultiThreadSignal;
 import cool.muyucloud.saplanting.Saplanting;
+import cool.muyucloud.saplanting.thread.ItemEntityThread;
 import net.minecraft.block.*;
 import net.minecraft.block.sapling.LargeTreeSaplingGenerator;
 import net.minecraft.entity.Entity;
@@ -36,82 +36,96 @@ extends Entity {
     @Inject(method = "tick", at = @At("TAIL"))
     public void tick(CallbackInfo ci) {
         if (!this.world.isClient()) {
-            if (!MultiThreadSignal.threadAlive() && !MultiThreadSignal.threadRegistered()) {
+            if (!ItemEntityThread.isThreadExists()) {
                 LOGGER.info("Creating thread for entity processing.");
-                MultiThreadSignal.registerThread(ItemEntityMixin::loop);
-                MultiThreadSignal.threadStart();
+                ItemEntityThread.initThread(ItemEntityMixin::run);
             }
             if (Config.isPlantableItem(this.getStack().getItem())) {
-                MultiThreadSignal.addTask(this);
+                ItemEntityThread.addTask(this);
+                if (ItemEntityThread.isThreadWaiting()) {
+                    ItemEntityThread.wakeUp();
+                }
             }
         }
     }
 
-    private static void loop() {
+    private synchronized static void run() {
         try {
-            while (!MultiThreadSignal.threadInterrupted()) {
-                if (MultiThreadSignal.taskEmpty()) {
-                    Thread.sleep(1);
+            while (ItemEntityThread.isUnexpectedKill()) {
+                if (ItemEntityThread.taskEmpty()) {
+                    try {
+                        ItemEntityThread.sleep();
+                    } catch (Exception ignored) {}
+                    continue;
                 }
-                plant((ItemEntityMixin) MultiThreadSignal.popTask());
+                plant(((ItemEntityMixin) ItemEntityThread.popTask()));
             }
         } catch (Exception e) {
-            if (MultiThreadSignal.threadAlive()) {
-                LOGGER.error("Saplanting item entity process exits unexpectedly.");
+            if (!ItemEntityThread.isUnexpectedKill()) {
+                LOGGER.error("Saplanting item entity process exited unexpectedly.");
                 e.printStackTrace();
             }
         }
-        MultiThreadSignal.killThread();
+        ItemEntityThread.markAsStopped();
     }
     
     private static void plant(ItemEntityMixin itemEntityMixin) {
-        if (itemEntityMixin == null) {
+        // exit if auto plant not enabled
+        if (!Config.getPlantEnable()) {
             return;
         }
-        if (Config.getPlantEnable()) {
-            // schedule planting
-            if (itemEntityMixin.plantable()) {  // if OK to plant, plus age
-                ++itemEntityMixin.plantAge;
-            } else {                            // if not, reset age
-                itemEntityMixin.plantAge = 0;
+
+        // schedule planting
+        if (itemEntityMixin.plantable()) {  // if OK to plant, plus age
+            ++itemEntityMixin.plantAge;
+        } else {                            // if not, reset age and exit
+            itemEntityMixin.plantAge = 0;
+            return;
+        }
+
+        // if age do not reach plant delay, exit
+        if (itemEntityMixin.plantAge < Config.getPlantDelay()) {
+            return;
+        }
+
+        BlockPos pos = itemEntityMixin.getBlockPos();
+
+        // correct position
+        if (itemEntityMixin.getPos().getY() % 1 != 0) {
+            pos = pos.add(0, 1, 0);
+        }
+
+        // reset age
+        itemEntityMixin.plantAge = 0;
+
+        //
+        if (!((Config.getPlayerAround() > 0 && playerAround(itemEntityMixin.world, pos))
+                || (Config.getAvoidDense() > 0 && hasOther(itemEntityMixin.world, pos))
+        )) {
+            // plant 2x2 tree
+            if (Config.getPlantLarge()
+                    && ((BlockItem) itemEntityMixin.getStack().getItem()).getBlock() instanceof SaplingBlock
+                    && ((SaplingBlockAccessor) ((BlockItem) itemEntityMixin.getStack().getItem()).getBlock()).getGenerator() instanceof LargeTreeSaplingGenerator
+                    && itemEntityMixin.getStack().getCount() >= 4) {
+                for (BlockPos tmpos : BlockPos.iterate(pos.add(-1, 0, -1), pos)) {
+                    if (spaceOK2x2(itemEntityMixin.world, tmpos, ((SaplingBlock) ((BlockItem) itemEntityMixin.getStack().getItem()).getBlock()))) {
+                        fillSapling(itemEntityMixin.world, tmpos, ((BlockItem) itemEntityMixin.getStack().getItem()).getBlock().getDefaultState());
+                        itemEntityMixin.getStack().setCount(itemEntityMixin.getStack().getCount() - 4);
+                        break;
+                    }
+                }
             }
 
-            // if age reach plant delay, do planting
-            if (itemEntityMixin.plantAge >= Config.getPlantDelay() && itemEntityMixin.plantable()) {
-                BlockPos pos = itemEntityMixin.getBlockPos();
-                if (itemEntityMixin.getPos().getY() % 1 != 0) {
-                    pos = pos.add(0, 1, 0);
-                }
-                itemEntityMixin.plantAge = 0;  // reset age
-                if (!((Config.getPlayerAround() > 0 && playerAround(itemEntityMixin.world, pos))
-                        || (Config.getAvoidDense() > 0 && hasOther(itemEntityMixin.world, pos))
-                )) {
-                    // plant 2x2 tree
-                    if (Config.getPlantLarge()
-                            && ((BlockItem) itemEntityMixin.getStack().getItem()).getBlock() instanceof SaplingBlock
-                            && ((SaplingBlockAccessor) ((BlockItem) itemEntityMixin.getStack().getItem()).getBlock()).getGenerator() instanceof LargeTreeSaplingGenerator
-                            && itemEntityMixin.getStack().getCount() >= 4) {
-                        for (BlockPos tmpos : BlockPos.iterate(pos.add(-1, 0, -1), pos)) {
-                            if (spaceOK2x2(itemEntityMixin.world, tmpos, ((SaplingBlock) ((BlockItem) itemEntityMixin.getStack().getItem()).getBlock()))) {
-                                fillSapling(itemEntityMixin.world, tmpos, ((BlockItem) itemEntityMixin.getStack().getItem()).getBlock().getDefaultState());
-                                itemEntityMixin.getStack().setCount(itemEntityMixin.getStack().getCount() - 4);
-                                break;
-                            }
-                        }
-                    }
-
-                    // plant other
-                    if (itemEntityMixin.getStack().getCount() > 0
-                            && spaceOK(itemEntityMixin.world, pos
-                            , ((PlantBlock) ((BlockItem) itemEntityMixin.getStack().getItem()).getBlock()))) {
-                        // plant at own position
-                        itemEntityMixin.world.setBlockState(pos,
-                                ((BlockItem) itemEntityMixin.getStack().getItem()).getBlock().getDefaultState(),
-                                Block.NOTIFY_ALL);
-                        // minus 1 count
-                        itemEntityMixin.getStack().setCount(itemEntityMixin.getStack().getCount() - 1);
-                    }
-                }
+            // plant other
+            if (itemEntityMixin.getStack().getCount() > 0
+                    && spaceOK(itemEntityMixin.world, pos
+                    , ((PlantBlock) ((BlockItem) itemEntityMixin.getStack().getItem()).getBlock()))) {
+                // plant at own position
+                itemEntityMixin.world.setBlockState(pos,
+                        ((BlockItem) itemEntityMixin.getStack().getItem()).getBlock().getDefaultState(),
+                        Block.NOTIFY_ALL);
+                // minus 1 count
+                itemEntityMixin.getStack().setCount(itemEntityMixin.getStack().getCount() - 1);
             }
         }
     }

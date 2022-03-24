@@ -9,7 +9,7 @@ output: pdf_document
 能够自动种植树苗掉落物的Fabric模组；  
 其他模组加入的树苗理论上也能够种植；  
 其他植物方块也可以被自动种植，但需要手动开启此功能。  
-适用版本1.18.1，需要安装Fabric Loader与Fabric API。
+请注意模组适用的游戏版本，需要安装Fabric Loader与Fabric API。
 
 ## 简介  
 如果你还在为砍树后一地的掉落物而发愁，这个模组能够帮到你！  
