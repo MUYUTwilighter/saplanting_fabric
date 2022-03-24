@@ -1,7 +1,7 @@
 ---
 title: "Saplanting(Fabric) Manual"
 author: MUYU_Twilighter
-date: 2022.2.27
+date: 2022.3.24
 output: pdf_document
 ---
 
@@ -72,6 +72,26 @@ And vice versa.
 
 ### Change Property
  - /saplanting \<PropertyName\> \<value\>: set value of target property.
+
+## Rules in distribution and usage
+### Distribution related
+If you want to post a page for this mod on other websites, please contact the author and then do it with permission. Request from NetEase and MCBBS will not be allowed.  
+If you want to share this mod personally, please share the link of this project or other authorized pages, instead of distributing files of this mod.  
+### Usage related
+#### For mod developer
+- Expansive development is welcomed.
+- You are allowed to replant this mod on other MC versions.  
+- Operations above would NOT need to post a link related to this mod.
+
+#### For mod pack authors
+- Include this mod for offline package & installer of your mod pack is allowed, but citation of this mod and version is required; if the version is updated with authorized distributive websites, please note your update source(For example, "Version updates with CurseForge").  
+- Modifications on this mod via various approaches is allowed, but we WON'T take responsibility if fatal problems occurred.  
+- Operations above would NOT need to post a link related to this mod.
+
+#### For players
+- Usage on appropriate platform is OK, and feedback will always be listened.
+- Feedback from Minecraft-NetEase will never get maintenance.  
+- Streaming and videoing is allowed, as well as posting records on various platform.  
 
 ## Contact Me
 buy me a coffee：https://afdian.net/@muyucloud  
