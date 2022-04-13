@@ -4,94 +4,89 @@ import cool.muyucloud.saplanting.Saplanting;
 import net.minecraft.server.MinecraftServer;
 
 import java.util.LinkedList;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public class ItemEntityThread {
-    private static final ItemEntityThread THREAD = new ItemEntityThread();
+    private static final ItemEntityThread SIGNAL = new ItemEntityThread();
 
     private boolean isThreadExists;
     private boolean isThreadWaiting;
-    private boolean isScheduledKill;
-    private final ThreadPoolExecutor threadPoolExecutor;
+    private boolean scheduledKill;
+    private Thread thread;
     private final LinkedList<Object> taskQueue;
 
     private ItemEntityThread() {
         this.isThreadExists = false;
         this.isThreadWaiting = false;
-        this.isScheduledKill = true;
-
-        this.threadPoolExecutor = new ThreadPoolExecutor(
-                1, 1, 0L,
-                TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>()
-        );
+        this.scheduledKill = false;
+        this.thread = null;
 
         this.taskQueue = new LinkedList<>();
     }
 
     /* Thread Signature Accessors */
     public static boolean isThreadExists() {
-        return THREAD.isThreadExists;
+        return SIGNAL.isThreadExists;
     }
 
     public static boolean isThreadWaiting() {
-        return THREAD.isThreadWaiting;
+        return SIGNAL.isThreadWaiting;
     }
 
-    public static boolean isUnexpectedKill() {
-        return THREAD.isScheduledKill;
+    public static boolean scheduledKill() {
+        return SIGNAL.scheduledKill;
     }
 
     /* Thread Operations */
     public static void initThread(Runnable function) {
-        if (THREAD.isThreadExists) {
+        if (SIGNAL.isThreadExists) {
             return;
         }
-        THREAD.threadPoolExecutor.execute(function);
-        THREAD.isThreadExists = true;
-        THREAD.isThreadWaiting = false;
-        THREAD.isScheduledKill = true;
+        SIGNAL.isThreadExists = true;
+        SIGNAL.isThreadWaiting = false;
+        SIGNAL.scheduledKill = false;
+        SIGNAL.thread = new Thread(function);
+        SIGNAL.thread.start();
     }
 
     public static void onServerStopping(MinecraftServer server) {
-        THREAD.taskQueue.clear();
+        SIGNAL.scheduledKill = true;
+        SIGNAL.taskQueue.clear();
     }
 
     public synchronized static void wakeUp() {
-        THREAD.threadPoolExecutor.shutdownNow();
-        THREAD.isThreadWaiting = false;
+        SIGNAL.thread.interrupt();
+        SIGNAL.isThreadWaiting = false;
     }
 
-    public synchronized static void sleep() {
-        THREAD.isThreadWaiting = true;
-        Thread.onSpinWait();
+    public synchronized static void sleep() throws InterruptedException {
+        SIGNAL.isThreadWaiting = true;
+        SIGNAL.thread.wait();
     }
 
     public static void markAsStopped() {
-        THREAD.isThreadExists = false;
-        THREAD.isThreadWaiting = false;
+        SIGNAL.isThreadExists = false;
+        SIGNAL.isThreadWaiting = false;
     }
 
     /* Task Queue Operations */
     // please ensure that input is valid!
     public static void addTask(Object item) {
-        if (THREAD.taskQueue.size() > 1000) {
-            Saplanting.getLogger().warn("Too many items! Cleared " + THREAD.taskQueue.size() + " tasks.");
-            THREAD.taskQueue.clear();
+        if (SIGNAL.taskQueue.size() > 1000) {
+            Saplanting.getLogger().warn("Too many items! Cleared " + SIGNAL.taskQueue.size() + " tasks.");
+            SIGNAL.taskQueue.clear();
         }
-        THREAD.taskQueue.add(item);
+        SIGNAL.taskQueue.add(item);
     }
 
     public static Object popTask() {
         Object output = null;
-        while (!THREAD.taskQueue.isEmpty() && output == null) {
-            output = THREAD.taskQueue.poll();
+        while (!SIGNAL.taskQueue.isEmpty() && output == null) {
+            output = SIGNAL.taskQueue.poll();
         }
         return output;
     }
 
     public static boolean taskEmpty() {
-        return THREAD.taskQueue.isEmpty();
+        return SIGNAL.taskQueue.isEmpty();
     }
 }
