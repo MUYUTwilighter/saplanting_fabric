@@ -46,12 +46,12 @@ extends Entity {
             if (Config.isPlantableItem(this.getStack().getItem()) && !this.plantOK) {
                 ItemEntityThread.addTask(this);
                 if (ItemEntityThread.isThreadWaiting()) {
-                    ItemEntityThread.wakeUp();
+                    ItemEntityThread.awaken();
                 }
             }
 
             // plant if ok to do so
-            if (this.plantOK) {
+            if (this.plantOK && this.plantable()) {
                 BlockPos pos = this.getBlockPos();
 
                 // correct position
@@ -68,6 +68,7 @@ extends Entity {
                         if (spaceOK2x2(this.world, tmpos, ((SaplingBlock) ((BlockItem) this.getStack().getItem()).getBlock()))) {
                             fillSapling(this.world, tmpos, ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState());
                             this.getStack().setCount(this.getStack().getCount() - 4);
+                            this.plantOK = false;
                             return;
                         }
                     }

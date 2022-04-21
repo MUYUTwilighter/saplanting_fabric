@@ -9,7 +9,6 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -17,7 +16,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
-import java.util.Objects;
 
 public class Config {
     private static final Config CONFIG = new Config();
@@ -31,6 +29,7 @@ public class Config {
     private boolean allowFungus = false;
     private boolean allowFlower = false;
     private boolean allowOther = false;
+    private boolean showTitleOnPlayerConnected = false;
     private int plantDelay = 40;
     private int avoidDense = 2;
     private int playerAround = 2;
@@ -169,6 +168,10 @@ public class Config {
         return CONFIG.allowOther;
     }
 
+    public static boolean getShowTitleOnPlayerConnected() {
+        return CONFIG.showTitleOnPlayerConnected;
+    }
+
     public static int getPlantDelay() {
         return CONFIG.plantDelay;
     }
@@ -215,6 +218,10 @@ public class Config {
 
     public static void setAllowOther(boolean value) {
         CONFIG.allowOther = value;
+    }
+
+    public static void setShowTitleOnPlayerConnected(boolean value) {
+        CONFIG.showTitleOnPlayerConnected = value;
     }
 
     public static void setPlantDelay(int plantDelay) {
@@ -301,6 +308,14 @@ public class Config {
         return false;
     }
 
+    private boolean initShowTitleOnPlayerConnected(JsonObject jsonObject) {
+        try {
+            this.allowOther = jsonObject.get("showTitleOnPlayerConnected").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
+    }
+
     private boolean initPlantDelay(JsonObject jsonObject) {
         try {
             this.plantDelay = jsonObject.get("plantDelay").getAsInt();
@@ -374,6 +389,7 @@ public class Config {
         output.append(indent).append("\"allowFungus\": ").append(allowFungus).append(",\n");
         output.append(indent).append("\"allowFlower\": ").append(allowFlower).append(",\n");
         output.append(indent).append("\"allowOther\": ").append(allowOther).append(",\n");
+        output.append(indent).append("\"showTitleOnPlayerConnected\": ").append(showTitleOnPlayerConnected).append(",\n");
         output.append(indent).append("\"plantDelay\": ").append(plantDelay).append(",\n");
         output.append(indent).append("\"avoidDense\": ").append(avoidDense).append(",\n");
         output.append(indent).append("\"playerAround\": ").append(playerAround).append(",\n");
@@ -456,6 +472,7 @@ public class Config {
                 initAllowFungus(jsonObject);
                 initAllowFlower(jsonObject);
                 initAllowOther(jsonObject);
+                initShowTitleOnPlayerConnected(jsonObject);
                 initPlantDelay(jsonObject);
                 initAvoidDense(jsonObject);
                 initPlayerAround(jsonObject);
@@ -474,32 +491,37 @@ public class Config {
                 Gson gson = new Gson();
                 JsonObject jsonObject = gson.fromJson(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8), JsonObject.class);
 
-                if (Objects.equals(name, "plantEnable")) {
-                    return initPlantEnable(jsonObject);
-                } else if (Objects.equals(name, "plantLarge")) {
-                    return initPlantLarge(jsonObject);
-                } else if (Objects.equals(name, "blackListEnable")) {
-                    return initBlackListEnable(jsonObject);
-                } else if (Objects.equals(name, "allowSapling")) {
-                    return initAllowSapling(jsonObject);
-                } else if (Objects.equals(name, "allowCrop")) {
-                    return initAllowCrop(jsonObject);
-                } else if (Objects.equals(name, "allowMushroom")) {
-                    return initAllowMushroom(jsonObject);
-                } else if (Objects.equals(name, "allowFungus")) {
-                    return initAllowFungus(jsonObject);
-                } else if (Objects.equals(name, "allowFlower")) {
-                    return initAllowFlower(jsonObject);
-                } else if (Objects.equals(name, "allowOther")) {
-                    return initAllowOther(jsonObject);
-                } else if (Objects.equals(name, "plantDelay")) {
-                    return initPlantDelay(jsonObject);
-                } else if (Objects.equals(name, "avoidDense")) {
-                    return initAvoidDense(jsonObject);
-                } else if (Objects.equals(name, "playerAround")) {
-                    return initPlayerAround(jsonObject);
-                } else if (Objects.equals(name, "blackList")) {
-                    return initBlackList(jsonObject);
+                switch (name) {
+                    case "plantEnable":
+                        return initPlantEnable(jsonObject);
+                    case "plantLarge":
+                        return initPlantLarge(jsonObject);
+                    case "blackListEnable":
+                        return initBlackListEnable(jsonObject);
+                    case "allowSapling":
+                        return initAllowSapling(jsonObject);
+                    case "allowCrop":
+                        return initAllowCrop(jsonObject);
+                    case "allowMushroom":
+                        return initAllowMushroom(jsonObject);
+                    case "allowFungus":
+                        return initAllowFungus(jsonObject);
+                    case "allowFlower":
+                        return initAllowFlower(jsonObject);
+                    case "allowOther":
+                        return initAllowOther(jsonObject);
+                    case "showTitleOnPlayerConnected":
+                        return initShowTitleOnPlayerConnected(jsonObject);
+                    case "plantDelay":
+                        return initPlantDelay(jsonObject);
+                    case "avoidDense":
+                        return initAvoidDense(jsonObject);
+                    case "playerAround":
+                        return initPlayerAround(jsonObject);
+                    case "blackList":
+                        return initBlackList(jsonObject);
+                    default:
+                        break;
                 }
             } catch (Exception e) {
                 e.printStackTrace();

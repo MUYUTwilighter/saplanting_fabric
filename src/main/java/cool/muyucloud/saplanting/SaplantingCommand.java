@@ -16,7 +16,12 @@ public class SaplantingCommand {
         // /saplanting
         final LiteralArgumentBuilder<ServerCommandSource> root = (CommandManager.literal("saplanting")
                 .requires(source -> source.hasPermissionLevel(2)));
-        root.executes(context -> showAll(context.getSource()));
+
+        // /saplanting <Integer>/NULL
+        root.executes(context -> showAll(context.getSource(), 1));
+        root.then(CommandManager.argument("page", IntegerArgumentType.integer()).executes(
+                context -> showAll(context.getSource(), IntegerArgumentType.getInteger(context, "page"))
+        ));
 
         // /saplanting plantEnable
         root.then(CommandManager.literal("plantEnable").executes(context -> getPlantEnable(context.getSource()))
@@ -57,6 +62,11 @@ public class SaplantingCommand {
         root.then(CommandManager.literal("allowOther").executes(context -> getAllowOther(context.getSource()))
                 .then(CommandManager.argument("value", BoolArgumentType.bool())
                         .executes(context -> setAllowOther(context.getSource(), BoolArgumentType.getBool(context, "value")))));
+
+        // saplanting allowOther
+        root.then(CommandManager.literal("showTitleOnPlayerConnected").executes(context -> getShowTitleOnPlayerConnected(context.getSource()))
+                .then(CommandManager.argument("value", BoolArgumentType.bool())
+                        .executes(context -> setShowTitleOnPlayerConnected(context.getSource(), BoolArgumentType.getBool(context, "value")))));
 
         // /saplanting plantDelay
         root.then(CommandManager.literal("plantDelay").executes(context -> getPlantDelay(context.getSource()))
@@ -109,6 +119,8 @@ public class SaplantingCommand {
                 .executes(context -> loadProperty(context.getSource(), "allowFlower")));
         load.then(CommandManager.literal("allowOther")
                 .executes(context -> loadProperty(context.getSource(), "allowOther")));
+        load.then(CommandManager.literal("showTitleOnPlayerConnected")
+                .executes(context -> loadProperty(context.getSource(), "showTitleOnPlayerConnected")));
         load.then(CommandManager.literal("plantDelay")
                 .executes(context -> loadProperty(context.getSource(), "plantDelay")));
         load.then(CommandManager.literal("avoidDense")
@@ -171,21 +183,45 @@ public class SaplantingCommand {
         return output;
     }
 
-    public static int showAll(ServerCommandSource target) {
+    public static int showAll(ServerCommandSource target, int page) {
         target.sendFeedback(new TranslatableText("saplanting.commands.saplanting.showAll")
                 .setStyle(Style.EMPTY.withColor(TextColor.parse("gold"))), false);
-        target.sendFeedback(new LiteralText(" - plantEnable:   " + Config.getPlantEnable()), false);
-        target.sendFeedback(new LiteralText(" - plantLarge:    " + Config.getPlantLarge()), false);
-        target.sendFeedback(new LiteralText(" - blackList:     " + Config.getBlackListEnable()), false);
-        target.sendFeedback(new LiteralText(" - allowSapling:  " + Config.getAllowSapling()), false);
-        target.sendFeedback(new LiteralText(" - allowCrop:     " + Config.getAllowCrop()), false);
-        target.sendFeedback(new LiteralText(" - allowMushroom: " + Config.getAllowMushroom()), false);
-        target.sendFeedback(new LiteralText(" - allowFungus:   " + Config.getAllowFungus()), false);
-        target.sendFeedback(new LiteralText(" - allowFlower:   " + Config.getAllowFlower()), false);
-        target.sendFeedback(new LiteralText(" - allowOther:    " + Config.getAllowOther()), false);
-        target.sendFeedback(new LiteralText(" - plantDelay:    " + Config.getPlantDelay()), false);
-        target.sendFeedback(new LiteralText(" - avoidDense:    " + Config.getAvoidDense()), false);
-        target.sendFeedback(new LiteralText(" - playerAround:  " + Config.getPlayerAround()), false);
+
+        if (page < 0 || page > 3) {
+            page = 1;
+        }
+
+        switch (page) {
+            case 1 -> {
+                target.sendFeedback(new LiteralText(" - plantEnable:   " + Config.getPlantEnable()), false);
+                target.sendFeedback(new LiteralText(" - plantLarge:    " + Config.getPlantLarge()), false);
+                target.sendFeedback(new LiteralText(" - blackList:     " + Config.getBlackListEnable()), false);
+                target.sendFeedback(new LiteralText(" - allowSapling:  " + Config.getAllowSapling()), false);
+                target.sendFeedback(new LiteralText(" - allowCrop:     " + Config.getAllowCrop()), false);
+                target.sendFeedback(new LiteralText(" - allowMushroom: " + Config.getAllowMushroom()), false);
+                target.sendFeedback(new LiteralText(" - allowFungus:   " + Config.getAllowFungus()), false);
+                target.sendFeedback(new LiteralText(" - allowFlower:   " + Config.getAllowFlower()), false);
+                target.sendFeedback(new TranslatableText("saplanting.commands.saplanting.showAll.nextPage").setStyle(Style.EMPTY
+                        .withColor(TextColor.parse("green"))
+                        .withUnderline(true)
+                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/saplanting " + (page + 1)))), false);
+            }
+            case 2 -> {
+                target.sendFeedback(new LiteralText(" - allowOther:    " + Config.getAllowOther()), false);
+                target.sendFeedback(new LiteralText(" - ShowTitle... : " + Config.getAllowOther()).setStyle(Style.EMPTY
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("showTitleOnPlayerConnected")))),
+                        false);
+                target.sendFeedback(new LiteralText(" - plantDelay:    " + Config.getPlantDelay()), false);
+                target.sendFeedback(new LiteralText(" - avoidDense:    " + Config.getAvoidDense()), false);
+                target.sendFeedback(new LiteralText(" - playerAround:  " + Config.getPlayerAround()), false);
+                target.sendFeedback(new TranslatableText("saplanting.commands.saplanting.showAll.formerPage").setStyle(Style.EMPTY
+                        .withColor(TextColor.parse("green"))
+                        .withUnderline(true)
+                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/saplanting " + (page - 1)))), false);
+            }
+            default -> {
+            }
+        }
 
         return 1;
     }
@@ -260,6 +296,14 @@ public class SaplantingCommand {
     public static int setAllowOther(ServerCommandSource source, boolean value) {
         Config.setAllowOther(value);
         source.sendFeedback(new LiteralText("allowOther")
+                .append(new TranslatableText("saplanting.commands.saplanting.property.set"))
+                .append(Boolean.toString(value)), false);
+        return value ? 1 : 0;
+    }
+
+    public static int setShowTitleOnPlayerConnected(ServerCommandSource source, boolean value) {
+        Config.setShowTitleOnPlayerConnected(value);
+        source.sendFeedback(new LiteralText("showTitleOnPlayerConnected")
                 .append(new TranslatableText("saplanting.commands.saplanting.property.set"))
                 .append(Boolean.toString(value)), false);
         return value ? 1 : 0;
@@ -351,6 +395,13 @@ public class SaplantingCommand {
         source.sendFeedback(new LiteralText("allowOther")
                 .append(new TranslatableText("saplanting.commands.saplanting.property.show"))
                 .append(Boolean.toString(Config.getAllowOther())), false);
+        return Config.getPlantLarge() ? 1 : 0;
+    }
+
+    public static int getShowTitleOnPlayerConnected(ServerCommandSource source) {
+        source.sendFeedback(new LiteralText("showTitleOnPlayerConnected")
+                .append(new TranslatableText("saplanting.commands.saplanting.property.show"))
+                .append(Boolean.toString(Config.getShowTitleOnPlayerConnected())), false);
         return Config.getPlantLarge() ? 1 : 0;
     }
 

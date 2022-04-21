@@ -1,7 +1,6 @@
 package cool.muyucloud.saplanting.thread;
 
 import cool.muyucloud.saplanting.Saplanting;
-import net.minecraft.server.MinecraftServer;
 
 import java.util.LinkedList;
 
@@ -48,12 +47,12 @@ public class ItemEntityThread {
         SIGNAL.thread.start();
     }
 
-    public static void onServerStopping(MinecraftServer server) {
+    public static void discardThread() {
         SIGNAL.scheduledKill = true;
         SIGNAL.taskQueue.clear();
     }
 
-    public synchronized static void wakeUp() {
+    public synchronized static void awaken() {
         SIGNAL.thread.interrupt();
         SIGNAL.isThreadWaiting = false;
     }
