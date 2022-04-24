@@ -3,8 +3,8 @@ plugins {
     id 'maven-publish'
 }
 
-version project.mod_version
-group = project.maven_group
+version = project.mod_version as Object
+group = project.maven_group as Object
 
 repositories {
     // Add repositories to retrieve artifacts from in here.
@@ -16,8 +16,6 @@ repositories {
 
 dependencies {
     // https://mvnrepository.com/artifact/org.json/json
-    include(group: 'org.json', name: 'json', version: '20090211')
-    implementation(group: 'org.json', name: 'json', version: '20090211')
     // To change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
@@ -51,7 +49,7 @@ tasks.withType(JavaCompile).configureEach {
 java {
     def javaVersion = JavaVersion.toVersion(targetJavaVersion)
     if (JavaVersion.current() < javaVersion) {
-        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion as String)
     }
     archivesBaseName = project.archives_base_name
     // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task

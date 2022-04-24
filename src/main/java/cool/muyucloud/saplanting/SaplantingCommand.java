@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.ItemStackArgumentType;
 import net.minecraft.item.Item;
 import net.minecraft.server.command.CommandManager;
@@ -11,12 +12,16 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.*;
 
 public class SaplantingCommand {
-
-    public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
+    public static void register(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess commandRegistryAccess) {
         // /saplanting
         final LiteralArgumentBuilder<ServerCommandSource> root = (CommandManager.literal("saplanting")
                 .requires(source -> source.hasPermissionLevel(2)));
-        root.executes(context -> showAll(context.getSource()));
+
+        // /saplanting <Integer>/NULL
+        root.executes(context -> showAll(context.getSource(), 1));
+        root.then(CommandManager.argument("page", IntegerArgumentType.integer()).executes(
+                context -> showAll(context.getSource(), IntegerArgumentType.getInteger(context, "page"))
+        ));
 
         // /saplanting plantEnable
         root.then(CommandManager.literal("plantEnable").executes(context -> getPlantEnable(context.getSource()))
@@ -58,6 +63,11 @@ public class SaplantingCommand {
                 .then(CommandManager.argument("value", BoolArgumentType.bool())
                         .executes(context -> setAllowOther(context.getSource(), BoolArgumentType.getBool(context, "value")))));
 
+        // saplanting allowOther
+        root.then(CommandManager.literal("showTitleOnPlayerConnected").executes(context -> getShowTitleOnPlayerConnected(context.getSource()))
+                .then(CommandManager.argument("value", BoolArgumentType.bool())
+                        .executes(context -> setShowTitleOnPlayerConnected(context.getSource(), BoolArgumentType.getBool(context, "value")))));
+
         // /saplanting plantDelay
         root.then(CommandManager.literal("plantDelay").executes(context -> getPlantDelay(context.getSource()))
                 .then(CommandManager.argument("value", IntegerArgumentType.integer())
@@ -78,17 +88,48 @@ public class SaplantingCommand {
                 .then(CommandManager.literal("enable").executes(context -> setBlackListEnable(context.getSource(), true)))
                 .then(CommandManager.literal("disable").executes(context -> setBlackListEnable(context.getSource(), false)))
                 .then(CommandManager.literal("add")
-                        .then(CommandManager.argument("itemName", ItemStackArgumentType.itemStack())
+                        .then(CommandManager.argument("itemName", ItemStackArgumentType.itemStack(commandRegistryAccess))
                                 .executes(context -> addBlackList(context.getSource(), ItemStackArgumentType.getItemStackArgument(context, "itemName").getItem()))))
                 .then(CommandManager.literal("remove")
-                        .then(CommandManager.argument("item", ItemStackArgumentType.itemStack())
+                        .then(CommandManager.argument("item", ItemStackArgumentType.itemStack(commandRegistryAccess))
                                 .executes(context -> removeBlackList(context.getSource()
                                         , ItemStackArgumentType.getItemStackArgument(context, "item").getItem()))))
                 .then(CommandManager.literal("list")
-                        .executes(context -> showBlackList(context.getSource()))));
+                        .executes(context -> showBlackList(context.getSource())))
+                .then(CommandManager.literal("clear")
+                        .executes(context -> clearBlackList(context.getSource()))));
+
+        // /saplanting load <Property>
+        LiteralArgumentBuilder<ServerCommandSource> load = CommandManager.literal("load").executes(context -> loadProperty(context.getSource()));
+        load.then(CommandManager.literal("plantEnable")
+                .executes(context -> loadProperty(context.getSource(), "plantEnable")));
+        load.then(CommandManager.literal("plantLarge")
+                .executes(context -> loadProperty(context.getSource(), "plantLarge")));
+        load.then(CommandManager.literal("blackListEnable")
+                .executes(context -> loadProperty(context.getSource(), "blackListEnable")));
+        load.then(CommandManager.literal("allowSapling")
+                .executes(context -> loadProperty(context.getSource(), "allowSapling")));
+        load.then(CommandManager.literal("allowCrop")
+                .executes(context -> loadProperty(context.getSource(), "allowCrop")));
+        load.then(CommandManager.literal("allowMushroom")
+                .executes(context -> loadProperty(context.getSource(), "allowMushroom")));
+        load.then(CommandManager.literal("allowFungus")
+                .executes(context -> loadProperty(context.getSource(), "allowFungus")));
+        load.then(CommandManager.literal("allowFlower")
+                .executes(context -> loadProperty(context.getSource(), "allowFlower")));
+        load.then(CommandManager.literal("allowOther")
+                .executes(context -> loadProperty(context.getSource(), "allowOther")));
+        load.then(CommandManager.literal("showTitleOnPlayerConnected")
+                .executes(context -> loadProperty(context.getSource(), "showTitleOnPlayerConnected")));
+        load.then(CommandManager.literal("plantDelay")
+                .executes(context -> loadProperty(context.getSource(), "plantDelay")));
+        load.then(CommandManager.literal("avoidDense")
+                .executes(context -> loadProperty(context.getSource(), "avoidDense")));
+        load.then(CommandManager.literal("playerAround")
+                .executes(context -> loadProperty(context.getSource(), "playerAround")));
 
         // /saplanting load
-        root.then(CommandManager.literal("load").executes(context -> loadProperty(context.getSource())));
+        root.then(load);
 
         // /saplanting save
         root.then(CommandManager.literal("save").executes(context -> saveProperty(context.getSource())));
@@ -112,6 +153,10 @@ public class SaplantingCommand {
             source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.blackList.add.inBlackList")
                     .setStyle(Style.EMPTY.withColor(TextColor.parse("red"))), false);
             return 0;
+        } else if (!Config.isPlantableItem(item)) {
+            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.blackList.add.notPlantable")
+                    .setStyle(Style.EMPTY.withColor(TextColor.parse("red"))), false);
+            return 0;
         } else {
             source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.blackList.add.success"), false);
             Config.addBlackListItem(item);
@@ -131,21 +176,50 @@ public class SaplantingCommand {
         }
     }
 
-    public static int showAll(ServerCommandSource target) {
+    public static int clearBlackList(ServerCommandSource source) {
+        int output = Config.blackListLength();
+        Config.clearBlackList();
+        source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.blackList.clear"), false);
+        return output;
+    }
+
+    public static int showAll(ServerCommandSource target, int page) {
         target.sendFeedback(new TranslatableText("saplanting.commands.saplanting.showAll")
                 .setStyle(Style.EMPTY.withColor(TextColor.parse("gold"))), false);
-        target.sendFeedback(new LiteralText(" - plantEnable:   " + Config.getPlantEnable()), false);
-        target.sendFeedback(new LiteralText(" - plantLarge:    " + Config.getPlantLarge()), false);
-        target.sendFeedback(new LiteralText(" - blackList:     " + Config.getBlackListEnable()), false);
-        target.sendFeedback(new LiteralText(" - allowSapling:  " + Config.getAllowSapling()), false);
-        target.sendFeedback(new LiteralText(" - allowCrop:     " + Config.getAllowCrop()), false);
-        target.sendFeedback(new LiteralText(" - allowMushroom: " + Config.getAllowMushroom()), false);
-        target.sendFeedback(new LiteralText(" - allowFungus:   " + Config.getAllowFungus()), false);
-        target.sendFeedback(new LiteralText(" - allowFlower:   " + Config.getAllowFlower()), false);
-        target.sendFeedback(new LiteralText(" - allowOther:    " + Config.getAllowOther()), false);
-        target.sendFeedback(new LiteralText(" - plantDelay:    " + Config.getPlantDelay()), false);
-        target.sendFeedback(new LiteralText(" - avoidDense:    " + Config.getAvoidDense()), false);
-        target.sendFeedback(new LiteralText(" - playerAround:  " + Config.getPlayerAround()), false);
+
+        if (page < 0 || page > 3) {
+            page = 1;
+        }
+
+        switch (page) {
+            case 1 -> {
+                target.sendFeedback(new LiteralText(" - plantEnable:   " + Config.getPlantEnable()), false);
+                target.sendFeedback(new LiteralText(" - plantLarge:    " + Config.getPlantLarge()), false);
+                target.sendFeedback(new LiteralText(" - blackList:     " + Config.getBlackListEnable()), false);
+                target.sendFeedback(new LiteralText(" - allowSapling:  " + Config.getAllowSapling()), false);
+                target.sendFeedback(new LiteralText(" - allowCrop:     " + Config.getAllowCrop()), false);
+                target.sendFeedback(new LiteralText(" - allowMushroom: " + Config.getAllowMushroom()), false);
+                target.sendFeedback(new LiteralText(" - allowFungus:   " + Config.getAllowFungus()), false);
+                target.sendFeedback(new LiteralText(" - allowFlower:   " + Config.getAllowFlower()), false);
+                target.sendFeedback(new TranslatableText("saplanting.commands.saplanting.showAll.nextPage").setStyle(Style.EMPTY
+                        .withColor(TextColor.parse("green"))
+                        .withUnderline(true)
+                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/saplanting " + (page + 1)))), false);
+            }
+            case 2 -> {
+                target.sendFeedback(new LiteralText(" - allowOther:    " + Config.getAllowOther()), false);
+                target.sendFeedback(new LiteralText(" - ShowTitle... : " + Config.getAllowOther()).setStyle(Style.EMPTY
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("showTitleOnPlayerConnected")))),
+                        false);
+                target.sendFeedback(new LiteralText(" - plantDelay:    " + Config.getPlantDelay()), false);
+                target.sendFeedback(new LiteralText(" - avoidDense:    " + Config.getAvoidDense()), false);
+                target.sendFeedback(new LiteralText(" - playerAround:  " + Config.getPlayerAround()), false);
+                target.sendFeedback(new TranslatableText("saplanting.commands.saplanting.showAll.formerPage").setStyle(Style.EMPTY
+                        .withColor(TextColor.parse("green"))
+                        .withUnderline(true)
+                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/saplanting " + (page - 1)))), false);
+            }
+        }
 
         return 1;
     }
@@ -220,6 +294,14 @@ public class SaplantingCommand {
     public static int setAllowOther(ServerCommandSource source, boolean value) {
         Config.setAllowOther(value);
         source.sendFeedback(new LiteralText("allowOther")
+                .append(new TranslatableText("saplanting.commands.saplanting.property.set"))
+                .append(Boolean.toString(value)), false);
+        return value ? 1 : 0;
+    }
+
+    public static int setShowTitleOnPlayerConnected(ServerCommandSource source, boolean value) {
+        Config.setShowTitleOnPlayerConnected(value);
+        source.sendFeedback(new LiteralText("showTitleOnPlayerConnected")
                 .append(new TranslatableText("saplanting.commands.saplanting.property.set"))
                 .append(Boolean.toString(value)), false);
         return value ? 1 : 0;
@@ -314,6 +396,13 @@ public class SaplantingCommand {
         return Config.getPlantLarge() ? 1 : 0;
     }
 
+    public static int getShowTitleOnPlayerConnected(ServerCommandSource source) {
+        source.sendFeedback(new LiteralText("showTitleOnPlayerConnected")
+                .append(new TranslatableText("saplanting.commands.saplanting.property.show"))
+                .append(Boolean.toString(Config.getShowTitleOnPlayerConnected())), false);
+        return Config.getPlantLarge() ? 1 : 0;
+    }
+
     public static int getPlantDelay(ServerCommandSource source) {
         source.sendFeedback(new LiteralText("plantDelay")
                 .append(new TranslatableText("saplanting.commands.saplanting.property.show"))
@@ -353,6 +442,23 @@ public class SaplantingCommand {
             return 0;
         }
         return 1;
+    }
+
+    public static int loadProperty(ServerCommandSource source, String name) {
+        if (Config.load(name)) {
+            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.load.property.success")
+                    .append(new LiteralText(name).setStyle(Style.EMPTY
+                            .withUnderline(true).withColor(TextColor.parse("green"))
+                            .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/saplanting " + name))
+                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                    new TranslatableText("saplanting.commands.saplanting.load.property.success.suggestEvent"))))
+                    ), false);
+            return 1;
+        } else {
+            source.sendFeedback(new TranslatableText("saplanting.commands.saplanting.load.property.fail")
+                    .setStyle(Style.EMPTY.withColor(TextColor.parse("red"))), false);
+            return 0;
+        }
     }
 
     public static int saveProperty(ServerCommandSource source) {

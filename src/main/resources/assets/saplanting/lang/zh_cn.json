@@ -1,5 +1,7 @@
 {
   "saplanting.commands.saplanting.showAll": "========落苗生根设置项========",
+  "saplanting.commands.saplanting.showAll.formerPage": "| 上一页 |",
+  "saplanting.commands.saplanting.showAll.nextPage": "| 下一页 |",
 
   "saplanting.commands.saplanting.load.success.head": "成功加载设置文件，使用",
   "saplanting.commands.saplanting.load.success.suggestCommand": "'/saplanting'",
@@ -7,12 +9,17 @@
   "saplanting.commands.saplanting.load.success.suggestEvent": "键入指令",
   "saplanting.commands.saplanting.load.fail": "因未知原因加载失败",
 
+  "saplanting.commands.saplanting.load.property.success": "成功从文件加载指定配置：",
+  "saplanting.commands.saplanting.load.property.fail": "因未知原因加载失败",
+  "saplanting.commands.saplanting.load.property.success.suggestEvent": "查看该配置当前值",
+
   "saplanting.commands.saplanting.property.set": " 已被设置为 ",
   "saplanting.commands.saplanting.property.show": " 目前为 ",
 
   "saplanting.commands.saplanting.blackList.enable": "已启用黑名单",
   "saplanting.commands.saplanting.blackList.disable": "已禁用黑名单",
   "saplanting.commands.saplanting.blackList.add.inBlackList": "该物品已在黑名单中",
+  "saplanting.commands.saplanting.blackList.add.notPlantable": "该物品不可种植",
   "saplanting.commands.saplanting.blackList.add.success": "已成功添加到黑名单",
   "saplanting.commands.saplanting.blackList.remove.success": "成功从黑名单移除",
   "saplanting.commands.saplanting.blackList.remove.notInBlackList": "该物品不在黑名单中",
@@ -21,5 +28,7 @@
 
   "saplanting.commands.saplanting.save.success": "成功保存至文件",
   "saplanting.commands.saplanting.save.path": "打开文件",
-  "saplanting.commands.saplanting.save.fail": "因未知原因保存失败"
+  "saplanting.commands.saplanting.save.fail": "因未知原因保存失败",
+
+  "saplanting.info.chat.onPlayerConnected.disabled": "当前服务端落苗生根已被关闭"
 }

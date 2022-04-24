@@ -1,9 +1,10 @@
 package cool.muyucloud.saplanting;
 
+import cool.muyucloud.saplanting.thread.ItemEntityThread;
 import net.fabricmc.api.ModInitializer;
-
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.MinecraftServer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,22 +18,24 @@ public class Saplanting implements ModInitializer {
         LOGGER.info("Saplanting waking up! OwO");
 
         // register command /saplanting ...
-        LOGGER.info("registering commands '/saplanting' and its sub.");
-        CommandRegistrationCallback.EVENT.register(((dispatcher, dedicated) -> SaplantingCommand.register(dispatcher)));
+        LOGGER.info("Registering commands '/saplanting' and its sub.");
+        // CommandRegistrationCallback.EVENT.register(((dispatcher, registryAccess, dedicated) -> SaplantingCommand.register(dispatcher, registryAccess)));
 
         // register events @serverStop
-        LOGGER.info("registering stop-server events.");
+        LOGGER.info("Registering stop-server events.");
         ServerLifecycleEvents.SERVER_STOPPING.register(this::onServerStopping);
 
         // register events @serverStarted
-        LOGGER.info("registering server-started events.");
+        LOGGER.info("Registering server-started events.");
         ServerLifecycleEvents.SERVER_STARTED.register(this::onServerStarted);
 
         LOGGER.info("Initialized.");
     }
 
     private void onServerStopping(MinecraftServer server) {
-        LOGGER.info("dumping current properties into file.");
+        LOGGER.info("Stopping item entity thread.");
+        ItemEntityThread.discardThread();
+        LOGGER.info("Dumping current properties into file.");
         Config.saveConfig();
     }
 
@@ -46,5 +49,9 @@ public class Saplanting implements ModInitializer {
                 LOGGER.info("Use command \"/saplanting plantEnable true\" to enable saplanting");
             }
         }).start();
+    }
+
+    public static Logger getLogger() {
+        return LOGGER;
     }
 }

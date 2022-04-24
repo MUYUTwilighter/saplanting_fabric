@@ -1,17 +1,14 @@
 package cool.muyucloud.saplanting;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.*;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.tag.ItemTags;
-import net.minecraft.tag.Tag;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
-import org.json.JSONArray;
-import org.json.JSONObject;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -32,6 +29,7 @@ public class Config {
     private boolean allowFungus = false;
     private boolean allowFlower = false;
     private boolean allowOther = false;
+    private boolean showTitleOnPlayerConnected = false;
     private int plantDelay = 40;
     private int avoidDense = 2;
     private int playerAround = 2;
@@ -39,14 +37,20 @@ public class Config {
     private final HashSet<Item> plantableItem = new HashSet<>();
     private final HashSet<Item> blackList = new HashSet<>();
 
+    public static boolean isPlantableItem(Item item) {
+        return CONFIG.plantableItem.contains(item);
+    }
+
     public static void addBlackListItem(Item item) {
-        if (item != Items.AIR) {
-            CONFIG.blackList.add(item);
-        }
+        CONFIG.blackList.add(item);
     }
 
     public static void rmBlackListItem(Item item) {
         CONFIG.blackList.remove(item);
+    }
+
+    public static void clearBlackList() {
+        CONFIG.blackList.clear();
     }
 
     public static String stringBlackList() {
@@ -74,6 +78,10 @@ public class Config {
 
     public static void load() {
         CONFIG.loadFromFile();
+    }
+
+    public static boolean load(String name) {
+        return CONFIG.loadFromFile(name);
     }
 
     public static void saveConfig() {
@@ -160,6 +168,10 @@ public class Config {
         return CONFIG.allowOther;
     }
 
+    public static boolean getShowTitleOnPlayerConnected() {
+        return CONFIG.showTitleOnPlayerConnected;
+    }
+
     public static int getPlantDelay() {
         return CONFIG.plantDelay;
     }
@@ -208,6 +220,10 @@ public class Config {
         CONFIG.allowOther = value;
     }
 
+    public static void setShowTitleOnPlayerConnected(boolean value) {
+        CONFIG.showTitleOnPlayerConnected = value;
+    }
+
     public static void setPlantDelay(int plantDelay) {
         CONFIG.plantDelay = plantDelay;
     }
@@ -220,65 +236,143 @@ public class Config {
         CONFIG.playerAround = playerAround;
     }
 
-    private void initBlackListEnable(boolean value) {
-        this.blackListEnable = value;
+    private boolean initPlantEnable(JsonObject jsonObject) {
+        try {
+            this.plantEnable = jsonObject.get("plantEnable").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initPlantEnable(boolean value) {
-        this.plantEnable = value;
+    private boolean initPlantLarge(JsonObject jsonObject) {
+        try {
+            this.plantLarge = jsonObject.get("plantLarge").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initPlantLarge(boolean value) {
-        this.plantLarge = value;
+    private boolean initBlackListEnable(JsonObject jsonObject) {
+        try {
+            this.blackListEnable = jsonObject.get("blackListEnable").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initAllowSapling(boolean value) {
-        this.allowSapling = value;
+    private boolean initAllowSapling(JsonObject jsonObject) {
+        try {
+            this.allowSapling = jsonObject.get("allowSapling").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initAllowCrop(boolean value) {
-        this.allowCrop = value;
+    private boolean initAllowCrop(JsonObject jsonObject) {
+        try {
+            this.allowCrop = jsonObject.get("allowCrop").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initAllowMushroom(boolean value) {
-        this.allowMushroom = value;
+    private boolean initAllowMushroom(JsonObject jsonObject) {
+        try {
+            this.allowMushroom = jsonObject.get("allowMushroom").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initAllowFungus(boolean value) {
-        this.allowFungus = value;
+    private boolean initAllowFungus(JsonObject jsonObject) {
+        try {
+            this.allowFungus = jsonObject.get("allowFungus").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initAllowFlower(boolean value) {
-        this.allowFlower = value;
+    private boolean initAllowFlower(JsonObject jsonObject) {
+        try {
+            this.allowFlower = jsonObject.get("allowFlower").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initAllowOther(boolean value) {
-        this.allowOther = value;
+    private boolean initAllowOther(JsonObject jsonObject) {
+        try {
+            this.allowOther = jsonObject.get("allowOther").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initPlantDelay(int value) {
-        this.plantDelay = value;
+    private boolean initShowTitleOnPlayerConnected(JsonObject jsonObject) {
+        try {
+            this.allowOther = jsonObject.get("showTitleOnPlayerConnected").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initAvoidDense(int value) {
-        this.avoidDense = value;
+    private boolean initPlantDelay(JsonObject jsonObject) {
+        try {
+            this.plantDelay = jsonObject.get("plantDelay").getAsInt();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initPlayerAround(int value) {
-        this.playerAround = value;
+    private boolean initAvoidDense(JsonObject jsonObject) {
+        try {
+            this.avoidDense = jsonObject.get("avoidDense").getAsInt();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private void initBlackList(String name) {
-        if (name.length() < 2) {
-            return;
+    private boolean initPlayerAround(JsonObject jsonObject) {
+        try {
+            this.playerAround = jsonObject.get("playerAround").getAsInt();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
+    }
+
+    private boolean initBlackList(JsonObject jsonObject) {
+        blackList.clear();
+        JsonArray jsonArray;
+
+        try {
+            jsonArray = jsonObject.get("blackList").getAsJsonArray();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
-        if (name.charAt(0) == '#') {
-            Tag<Item> items = ItemTags.getTagGroup().getTag(new Identifier(name.substring(1)));
-            assert items != null;
-            blackList.addAll(items.values());
-        } else {
-            blackList.add(Registry.ITEM.get(new Identifier(name)));
+
+        if (jsonArray == null) {
+            return true;
         }
+
+        JsonArray finalJsonArray = jsonArray;
+        new Thread(() -> {
+            for (int i = 0; i < finalJsonArray.size(); i++) {
+                try {
+                    Item item = Registry.ITEM.get(new Identifier(finalJsonArray.get(i).getAsString()));
+                    if (isValidItem(item)) {
+                        blackList.add(item);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+        return true;
+    }
+
+    private boolean isValidItem(Item item) {
+        return item instanceof BlockItem blockItem && blockItem.getBlock() instanceof PlantBlock;
     }
 
     private String stringJSON() {
@@ -295,6 +389,7 @@ public class Config {
         output.append(indent).append("\"allowFungus\": ").append(allowFungus).append(",\n");
         output.append(indent).append("\"allowFlower\": ").append(allowFlower).append(",\n");
         output.append(indent).append("\"allowOther\": ").append(allowOther).append(",\n");
+        output.append(indent).append("\"showTitleOnPlayerConnected\": ").append(showTitleOnPlayerConnected).append(",\n");
         output.append(indent).append("\"plantDelay\": ").append(plantDelay).append(",\n");
         output.append(indent).append("\"avoidDense\": ").append(avoidDense).append(",\n");
         output.append(indent).append("\"playerAround\": ").append(playerAround).append(",\n");
@@ -329,13 +424,11 @@ public class Config {
 
     private Config() {
         // initialize saplings
-        Registry.ITEM.stream()
-                .filter(item -> (item instanceof BlockItem blockItem && blockItem.getBlock() instanceof PlantBlock))
-                .forEach(plantableItem::add);
+        new Thread(() -> Registry.ITEM.stream()
+                .filter(this::isValidItem)
+                .forEach(plantableItem::add)).start();
         // load setting from file
         loadFromFile();
-        // dump setting into file (correct typo)
-        save();
     }
 
     private void save() {
@@ -365,34 +458,75 @@ public class Config {
                 e.printStackTrace();
             }
         } else {
-            blackList.clear();
             // try to read properties from file
             try (InputStream inputStream = Files.newInputStream(CONFIG_PATH)) {
-                JSONObject jsonObject = new JSONObject(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8));
+                Gson gson = new Gson();
+                JsonObject jsonObject = gson.fromJson(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8), JsonObject.class);
 
-                initPlantEnable(jsonObject.getBoolean("plantEnable"));
-                initPlantLarge(jsonObject.getBoolean("plantLarge"));
-                initBlackListEnable(jsonObject.getBoolean("blackListEnable"));
-                initAllowSapling(jsonObject.getBoolean("allowSapling"));
-                initAllowCrop(jsonObject.getBoolean("allowCrop"));
-                initAllowMushroom(jsonObject.getBoolean("allowMushroom"));
-                initAllowFungus(jsonObject.getBoolean("allowFungus"));
-                initAllowFlower(jsonObject.getBoolean("allowFlower"));
-                initAllowOther(jsonObject.getBoolean("allowOther"));
-                initPlantDelay(jsonObject.getInt("plantDelay"));
-                initAvoidDense(jsonObject.getInt("avoidDense"));
-                initPlayerAround(jsonObject.getInt("playerAround"));
+                initPlantEnable(jsonObject);
+                initPlantLarge(jsonObject);
+                initBlackListEnable(jsonObject);
+                initAllowSapling(jsonObject);
+                initAllowCrop(jsonObject);
+                initAllowMushroom(jsonObject);
+                initAllowFungus(jsonObject);
+                initAllowFlower(jsonObject);
+                initAllowOther(jsonObject);
+                initShowTitleOnPlayerConnected(jsonObject);
+                initPlantDelay(jsonObject);
+                initAvoidDense(jsonObject);
+                initPlayerAround(jsonObject);
 
-                JSONArray blackListNames = jsonObject.getJSONArray("blackList");
-                int i = 0;
-                while (i < blackListNames.length()) {
-                    initBlackList(blackListNames.getString(i));
-                    ++i;
-                }
-                blackList.remove(Items.AIR);
+                initBlackList(jsonObject);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    private boolean loadFromFile(String name) {
+        if (Files.exists(CONFIG_PATH)) {
+            // try to read properties from file
+            try (InputStream inputStream = Files.newInputStream(CONFIG_PATH)) {
+                Gson gson = new Gson();
+                JsonObject jsonObject = gson.fromJson(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8), JsonObject.class);
+
+                switch (name) {
+                    case "plantEnable":
+                        return initPlantEnable(jsonObject);
+                    case "plantLarge":
+                        return initPlantLarge(jsonObject);
+                    case "blackListEnable":
+                        return initBlackListEnable(jsonObject);
+                    case "allowSapling":
+                        return initAllowSapling(jsonObject);
+                    case "allowCrop":
+                        return initAllowCrop(jsonObject);
+                    case "allowMushroom":
+                        return initAllowMushroom(jsonObject);
+                    case "allowFungus":
+                        return initAllowFungus(jsonObject);
+                    case "allowFlower":
+                        return initAllowFlower(jsonObject);
+                    case "allowOther":
+                        return initAllowOther(jsonObject);
+                    case "showTitleOnPlayerConnected":
+                        return initShowTitleOnPlayerConnected(jsonObject);
+                    case "plantDelay":
+                        return initPlantDelay(jsonObject);
+                    case "avoidDense":
+                        return initAvoidDense(jsonObject);
+                    case "playerAround":
+                        return initPlayerAround(jsonObject);
+                    case "blackList":
+                        return initBlackList(jsonObject);
+                    default:
+                        break;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
     }
 }
