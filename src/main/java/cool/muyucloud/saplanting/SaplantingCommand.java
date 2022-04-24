@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.ItemStackArgumentType;
 import net.minecraft.item.Item;
 import net.minecraft.server.command.CommandManager;
@@ -11,8 +12,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.*;
 
 public class SaplantingCommand {
-
-    public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
+    public static void register(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess commandRegistryAccess) {
         // /saplanting
         final LiteralArgumentBuilder<ServerCommandSource> root = (CommandManager.literal("saplanting")
                 .requires(source -> source.hasPermissionLevel(2)));
@@ -88,10 +88,10 @@ public class SaplantingCommand {
                 .then(CommandManager.literal("enable").executes(context -> setBlackListEnable(context.getSource(), true)))
                 .then(CommandManager.literal("disable").executes(context -> setBlackListEnable(context.getSource(), false)))
                 .then(CommandManager.literal("add")
-                        .then(CommandManager.argument("itemName", ItemStackArgumentType.itemStack())
+                        .then(CommandManager.argument("itemName", ItemStackArgumentType.itemStack(commandRegistryAccess))
                                 .executes(context -> addBlackList(context.getSource(), ItemStackArgumentType.getItemStackArgument(context, "itemName").getItem()))))
                 .then(CommandManager.literal("remove")
-                        .then(CommandManager.argument("item", ItemStackArgumentType.itemStack())
+                        .then(CommandManager.argument("item", ItemStackArgumentType.itemStack(commandRegistryAccess))
                                 .executes(context -> removeBlackList(context.getSource()
                                         , ItemStackArgumentType.getItemStackArgument(context, "item").getItem()))))
                 .then(CommandManager.literal("list")
@@ -218,8 +218,6 @@ public class SaplantingCommand {
                         .withColor(TextColor.parse("green"))
                         .withUnderline(true)
                         .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/saplanting " + (page - 1)))), false);
-            }
-            default -> {
             }
         }
 

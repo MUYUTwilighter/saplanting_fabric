@@ -4,7 +4,7 @@ author: 暮宇_Twilighter
 date: 2022.3.24
 output: pdf_document
 ---
-
+[![](http://cf.way2muchnoise.eu/full_saplanting_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/saplanting) [![Discord](https://img.shields.io/discord/966726130105217094)](https://discord.gg/JunKeKCJAY)  
 # 落苗生根(Fabric)  
 能够自动种植树苗掉落物的Fabric模组；  
 其他模组加入的树苗理论上也能够种植；  

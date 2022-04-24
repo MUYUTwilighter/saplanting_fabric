@@ -1,10 +1,10 @@
 ---
 title: "Saplanting(Fabric) Manual"
 author: MUYU_Twilighter
-date: 2022.3.24
+date: 2022.4.24
 output: pdf_document
 ---
-
+[![](http://cf.way2muchnoise.eu/full_saplanting_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/saplanting) [![Discord](https://img.shields.io/discord/966726130105217094)](https://discord.gg/JunKeKCJAY)  
 # Saplanting(Fabric)
 A fabric mod that automatically plants sapling drops in minecraft games.  
 Saplings from other mods are supported theoretically.  
