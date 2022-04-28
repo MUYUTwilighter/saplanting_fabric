@@ -12,13 +12,34 @@ import net.minecraft.util.registry.Registry;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Member;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class Config {
     private static final Config CONFIG = new Config();
+    private static final String[] BOOL_PROPERTY_NAMES = {
+            "plantEnable",
+            "plantLarge",
+            "blackListEnable",
+            "allowSapling",
+            "allowCrop",
+            "allowMushroom",
+            "allowFungus",
+            "allowFlower",
+            "allowOther",
+            "showTitleOnPlayerConnected"
+    };
+    private static final String[] INT_PROPERTY_NAMES = {
+            "plantDelay",
+            "avoidDense",
+            "playerAround"
+    };
 
     private boolean plantEnable = true;
     private boolean plantLarge = true;
@@ -36,6 +57,21 @@ public class Config {
     private final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("saplanting.json");
     private final HashSet<Item> plantableItem = new HashSet<>();
     private final HashSet<Item> blackList = new HashSet<>();
+
+    public static String[] getPropertyNames() {
+        ArrayList<String> output = new ArrayList<>();
+        output.addAll(Arrays.asList(BOOL_PROPERTY_NAMES));
+        output.addAll(Arrays.asList(INT_PROPERTY_NAMES));
+        return (String[]) output.toArray();
+    }
+
+    public static String[] getBoolPropertyNames() {
+        return BOOL_PROPERTY_NAMES;
+    }
+
+    public static String[] getIntPropertyNames() {
+        return INT_PROPERTY_NAMES;
+    }
 
     public static boolean isPlantableItem(Item item) {
         return CONFIG.plantableItem.contains(item);
