@@ -2,19 +2,19 @@ package cool.muyucloud.saplanting.mixin;
 
 import cool.muyucloud.saplanting.Config;
 import cool.muyucloud.saplanting.Saplanting;
+import cool.muyucloud.saplanting.access.ItemEntityAccess;
 import cool.muyucloud.saplanting.thread.ItemEntityThread;
 import net.minecraft.block.*;
 import net.minecraft.block.sapling.LargeTreeSaplingGenerator;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.item.*;
 import net.minecraft.tag.BlockTags;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
@@ -25,7 +25,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ItemEntity.class)
 public abstract class ItemEntityMixin
-extends Entity {
+extends Entity implements ItemEntityAccess {
     @Shadow public abstract ItemStack getStack();
 
     private int plantAge = 0;
@@ -54,13 +54,15 @@ extends Entity {
             }
 
             // plant if ok to do so
-            if (this.plantOK && this.plantable()) {
-                BlockPos pos = this.getBlockPos();
+            if (this.plantOK) {
+                if (!this.plantable()) {
+                    this.plantOK = false;
+                    return;
+                }
 
                 // correct position
-                if (this.getPos().getY() % 1 != 0) {
-                    pos = pos.add(0, 1, 0);
-                }
+                BlockPos pos = (this.getPos().getY() % 1 != 0) ? this.getBlockPos().up() :
+                        this.getBlockPos();
 
                 // plant 2x2 tree
                 if (Config.getPlantLarge()
@@ -68,7 +70,7 @@ extends Entity {
                         && ((SaplingBlockAccessor) ((BlockItem) this.getStack().getItem()).getBlock()).getGenerator() instanceof LargeTreeSaplingGenerator
                         && this.getStack().getCount() >= 4) {
                     for (BlockPos tmpos : BlockPos.iterate(pos.add(-1, 0, -1), pos)) {
-                        if (spaceOK2x2(this.world, tmpos, (BlockItem) this.getStack().getItem())) {
+                        if (spaceOK2x2(this.world, tmpos, ((PlantBlock) ((BlockItem) this.getStack().getItem()).getBlock()))) {
                             fillSapling(this.world, tmpos, ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState());
                             this.getStack().setCount(this.getStack().getCount() - 4);
                             this.plantOK = false;
@@ -80,7 +82,7 @@ extends Entity {
                 // plant other
                 if (this.getStack().getCount() > 0
                         && spaceOK(this.world, pos
-                        , (BlockItem) this.getStack().getItem())) {
+                        , ((PlantBlock) ((BlockItem) this.getStack().getItem()).getBlock()))) {
                     // plant at own position
                     this.world.setBlockState(pos,
                             ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState(),
@@ -132,25 +134,19 @@ extends Entity {
             return;
         }
 
-        BlockPos pos = itemEntityMixin.getBlockPos();
-
-        // correct position
-        if (itemEntityMixin.getPos().getY() % 1 != 0) {
-            pos = pos.add(0, 1, 0);
-        }
-
         // reset age
         itemEntityMixin.plantAge = 0;
 
         // plant around player? and is player around?
         if (Config.getPlayerAround() > 0
-                && itemEntityMixin.world.isPlayerInRange(itemEntityMixin.getX(), itemEntityMixin.getY(), itemEntityMixin.getZ(), Config.getPlayerAround())) {
+                && itemEntityMixin.world.isPlayerInRange(itemEntityMixin.getX()
+                , itemEntityMixin.getY(), itemEntityMixin.getZ(), Config.getPlayerAround())) {
             return;
         }
 
         // avoid dense? and is too dense?
         if (Config.getAvoidDense() > 0
-                && hasOther(itemEntityMixin.world, pos)) {
+                && itemEntityMixin.hasOther()) {
             return;
         }
 
@@ -158,12 +154,9 @@ extends Entity {
     }
 
     private boolean plantable() {
-        BlockPos pos = this.getBlockPos();
-
         // correct position
-        if (this.getPos().getY() % 1 != 0) {
-            pos = pos.add(0, 1, 0);
-        }
+        BlockPos pos = (this.getPos().getY() % 1 != 0) ? this.getBlockPos().up() :
+                this.getBlockPos();
         
         return this.world != null  // is world loaded
                 // is touching ground
@@ -171,23 +164,20 @@ extends Entity {
                 // is item a block
                 && Config.itemOK(this.getStack().getItem())
                 // is space ok
-                && spaceOK(this.world, pos, (BlockItem) this.getStack().getItem());
+                && spaceOK(this.world, pos, ((PlantBlock) ((BlockItem) this.getStack().getItem()).getBlock()));
     }
 
-    private static boolean spaceOK(World world, BlockPos pos, BlockItem block) {
-        if (!world.getBlockState(pos).getMaterial().isReplaceable()) {
-            return false;
+    private static boolean spaceOK(World world, BlockPos pos, PlantBlock block) {
+        if (block instanceof FluidFillable) {
+            return world.getBlockState(pos).getFluidState().isOf(Fluids.WATER)
+                    && block.canPlaceAt(block.getDefaultState(), world, pos);
+        } else {
+            return block.canPlaceAt(block.getDefaultState(), world, pos)
+                    && world.getBlockState(pos).getMaterial().isReplaceable();
         }
-
-        if (block.getBlock().getPlacementState(new ItemPlacementContext(null, Hand.MAIN_HAND, block.getDefaultStack(),
-                new BlockHitResult(new Vec3d(0, 0, 0), Direction.UP, pos, false))) == null) {
-            return false;
-        }
-
-        return ((PlantBlock) block.getBlock()).canPlaceAt(block.getBlock().getDefaultState(), world, pos);
     }
 
-    private static boolean spaceOK2x2(World world, BlockPos pos, BlockItem sapling) {
+    private static boolean spaceOK2x2(World world, BlockPos pos, PlantBlock sapling) {
         for (BlockPos tmpos : BlockPos.iterate(pos, pos.add(1, 0, 1))) {
             if (!spaceOK(world, tmpos, sapling)) {
                 return false;
@@ -196,9 +186,17 @@ extends Entity {
         return true;
     }
 
-    private static boolean hasOther(World world, BlockPos target) {
-        for (BlockPos pos : BlockPos.iterateOutwards(target,
-                Config.getAvoidDense(), Config.getAvoidDense(), Config.getAvoidDense())) {
+    private boolean hasOther() {
+        for (ItemEntity entity : this.world.getEntitiesByType(EntityType.ITEM, Box.from(BlockBox.create(
+                this.getBlockPos().add(-Config.getAvoidDense(), -Config.getAvoidDense(), -Config.getAvoidDense()),
+                this.getBlockPos().add(Config.getAvoidDense(), Config.getAvoidDense(), Config.getAvoidDense()))) , entity -> true)) {
+            if (((ItemEntityAccess) entity).isPlantOK()) {
+                return true;
+            }
+        }
+
+        for (BlockPos pos : BlockPos.iterate(this.getBlockPos().add(-Config.getAvoidDense(), -Config.getAvoidDense(), -Config.getAvoidDense()),
+                this.getBlockPos().add(Config.getAvoidDense(), Config.getAvoidDense(), Config.getAvoidDense()))) {
             if (world.getBlockState(pos).getBlock() instanceof LeavesBlock
                     || world.getBlockState(pos).getBlock() instanceof SaplingBlock
                     || world.getBlockState(pos).isIn(BlockTags.LOGS)) {
@@ -212,5 +210,10 @@ extends Entity {
         for (BlockPos tmpos : BlockPos.iterate(pos, pos.add(1, 0, 1))) {
             world.setBlockState(tmpos, blockState);
         }
+    }
+
+    @Override
+    public boolean isPlantOK() {
+        return this.plantOK;
     }
 }
