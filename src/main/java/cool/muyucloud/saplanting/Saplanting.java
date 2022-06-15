@@ -3,8 +3,9 @@ package cool.muyucloud.saplanting;
 import cool.muyucloud.saplanting.command.SaplantingCommand;
 import cool.muyucloud.saplanting.thread.ItemEntityThread;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.registry.DynamicRegistryManager;
 import org.apache.logging.log4j.LogManager;
@@ -20,7 +21,8 @@ public class Saplanting implements ModInitializer {
 
         // register command /saplanting ...
         LOGGER.info("Registering commands '/saplanting' and its sub.");
-        CommandRegistrationCallback.EVENT.register(((dispatcher, dedicated) -> SaplantingCommand.register(dispatcher)));
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
+                SaplantingCommand.register(dispatcher, registryAccess));
 
         // register events @serverStop
         LOGGER.info("Registering stop-server events.");

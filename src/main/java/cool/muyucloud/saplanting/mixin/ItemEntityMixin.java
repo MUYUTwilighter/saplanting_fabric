@@ -12,9 +12,7 @@ import net.minecraft.entity.ItemEntity;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.item.*;
 import net.minecraft.tag.BlockTags;
-import net.minecraft.util.math.BlockBox;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
+import net.minecraft.util.math.*;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
@@ -25,8 +23,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ItemEntity.class)
 public abstract class ItemEntityMixin
-extends Entity implements ItemEntityAccess {
-    @Shadow public abstract ItemStack getStack();
+        extends Entity implements ItemEntityAccess {
+    @Shadow
+    public abstract ItemStack getStack();
 
     private int plantAge = 0;
     private static final Logger LOGGER = Saplanting.getLogger();
@@ -102,7 +101,8 @@ extends Entity implements ItemEntityAccess {
                 if (ItemEntityThread.taskEmpty()) {
                     try {
                         ItemEntityThread.sleep();
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) {
+                    }
                     continue;
                 }
                 plant(((ItemEntityMixin) ItemEntityThread.popTask()));
@@ -114,7 +114,7 @@ extends Entity implements ItemEntityAccess {
         LOGGER.info("Saplanting item entity process discarding");
         ItemEntityThread.markAsStopped();
     }
-    
+
     private static void plant(ItemEntityMixin itemEntityMixin) {
         // exit if auto plant not enabled
         if (!Config.getPlantEnable()) {
@@ -145,19 +145,24 @@ extends Entity implements ItemEntityAccess {
         }
 
         // avoid dense? and is too dense?
-        if (Config.getAvoidDense() > 0
-                && itemEntityMixin.hasOther()) {
+        if (Config.getAvoidDense() > 0 && itemEntityMixin.hasOther()) {
             return;
         }
 
         itemEntityMixin.plantOK = true;
     }
 
+    /*
+    * This check:
+    * 1. world loaded
+    * 2. is on ground
+    * 3. is permitted to plant in config
+    * 4. this.spaceOK();
+    *  */
     private boolean plantable() {
         // correct position
-        BlockPos pos = (this.getPos().getY() % 1 != 0) ? this.getBlockPos().up() :
-                this.getBlockPos();
-        
+        BlockPos pos = (this.getPos().getY() % 1 != 0) ? this.getBlockPos().up() : this.getBlockPos();
+
         return this.world != null  // is world loaded
                 // is touching ground
                 && this.onGround
@@ -167,14 +172,17 @@ extends Entity implements ItemEntityAccess {
                 && spaceOK(this.world, pos, ((PlantBlock) ((BlockItem) this.getStack().getItem()).getBlock()));
     }
 
+    /* This check:
+    * 1. block.canPlaceAt()
+    * 2. temp block pos is replaceable
+    * 3. is not a waterlogged-only block
+    * */
     private static boolean spaceOK(World world, BlockPos pos, PlantBlock block) {
-        if (block instanceof FluidFillable) {
-            return world.getBlockState(pos).getFluidState().isOf(Fluids.WATER)
-                    && block.canPlaceAt(block.getDefaultState(), world, pos);
-        } else {
-            return block.canPlaceAt(block.getDefaultState(), world, pos)
-                    && world.getBlockState(pos).getMaterial().isReplaceable();
+        // if this is a block that CAN ONLY be planted in water
+        if (block instanceof FluidFillable && block.getDefaultState().getFluidState().isOf(Fluids.WATER)) {
+            return false;
         }
+        return block.canPlaceAt(block.getDefaultState(), world, pos) && world.getBlockState(pos).getMaterial().isReplaceable();
     }
 
     private static boolean spaceOK2x2(World world, BlockPos pos, PlantBlock sapling) {
@@ -187,15 +195,20 @@ extends Entity implements ItemEntityAccess {
     }
 
     private boolean hasOther() {
+        if (!(((BlockItem) this.getStack().getItem()).getBlock() instanceof SaplingBlock)) {
+            return false;
+        }
+
         for (ItemEntity entity : this.world.getEntitiesByType(EntityType.ITEM, Box.from(BlockBox.create(
                 this.getBlockPos().add(-Config.getAvoidDense(), -Config.getAvoidDense(), -Config.getAvoidDense()),
-                this.getBlockPos().add(Config.getAvoidDense(), Config.getAvoidDense(), Config.getAvoidDense()))) , entity -> true)) {
+                this.getBlockPos().add(Config.getAvoidDense(), Config.getAvoidDense(), Config.getAvoidDense()))), entity -> true)) {
             if (((ItemEntityAccess) entity).isPlantOK()) {
                 return true;
             }
         }
 
-        for (BlockPos pos : BlockPos.iterate(this.getBlockPos().add(-Config.getAvoidDense(), -Config.getAvoidDense(), -Config.getAvoidDense()),
+        for (BlockPos pos : BlockPos.iterate(
+                this.getBlockPos().add(-Config.getAvoidDense(), -Config.getAvoidDense(), -Config.getAvoidDense()),
                 this.getBlockPos().add(Config.getAvoidDense(), Config.getAvoidDense(), Config.getAvoidDense()))) {
             if (world.getBlockState(pos).getBlock() instanceof LeavesBlock
                     || world.getBlockState(pos).getBlock() instanceof SaplingBlock
