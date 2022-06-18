@@ -45,53 +45,49 @@ public abstract class ItemEntityMixin
             }
 
             // add this item to task queue
-            if (Config.isPlantableItem(this.getStack().getItem()) && !this.plantOK) {
+            if (!this.plantOK) {
                 ItemEntityThread.addTask(this);
-                if (ItemEntityThread.isThreadWaiting()) {
-                    ItemEntityThread.awaken();
-                }
+                return;
             }
 
             // plant if ok to do so
-            if (this.plantOK) {
-                if (!this.plantable()) {
-                    this.plantOK = false;
-                    return;
-                }
+            if (!this.plantable()) {
+                this.plantOK = false;
+                return;
+            }
 
-                // correct position
-                BlockPos pos = (this.getPos().getY() % 1 != 0) ? this.getBlockPos().up() :
-                        this.getBlockPos();
+            // correct position
+            BlockPos pos = (this.getPos().getY() % 1 != 0) ? this.getBlockPos().up() :
+                    this.getBlockPos();
 
-                // plant 2x2 tree
-                if (Config.getPlantLarge()
-                        && ((BlockItem) this.getStack().getItem()).getBlock() instanceof SaplingBlock
-                        && ((SaplingBlockAccessor) ((BlockItem) this.getStack().getItem()).getBlock()).getGenerator() instanceof LargeTreeSaplingGenerator
-                        && this.getStack().getCount() >= 4) {
-                    for (BlockPos tmpos : BlockPos.iterate(pos.add(-1, 0, -1), pos)) {
-                        if (spaceOK2x2(this.world, tmpos, ((PlantBlock) ((BlockItem) this.getStack().getItem()).getBlock()))) {
-                            fillSapling(this.world, tmpos, ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState());
-                            this.getStack().setCount(this.getStack().getCount() - 4);
-                            this.plantOK = false;
-                            return;
-                        }
+            // plant 2x2 tree
+            if (Config.getPlantLarge()
+                    && ((BlockItem) this.getStack().getItem()).getBlock() instanceof SaplingBlock
+                    && ((SaplingBlockAccessor) ((BlockItem) this.getStack().getItem()).getBlock()).getGenerator() instanceof LargeTreeSaplingGenerator
+                    && this.getStack().getCount() >= 4) {
+                for (BlockPos tmpos : BlockPos.iterate(pos.add(-1, 0, -1), pos)) {
+                    if (spaceOK2x2(this.world, tmpos, ((PlantBlock) ((BlockItem) this.getStack().getItem()).getBlock()))) {
+                        fillSapling(this.world, tmpos, ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState());
+                        this.getStack().setCount(this.getStack().getCount() - 4);
+                        this.plantOK = false;
+                        return;
                     }
                 }
-
-                // plant other
-                if (this.getStack().getCount() > 0
-                        && spaceOK(this.world, pos
-                        , ((PlantBlock) ((BlockItem) this.getStack().getItem()).getBlock()))) {
-                    // plant at own position
-                    this.world.setBlockState(pos,
-                            ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState(),
-                            Block.NOTIFY_ALL);
-                    // minus 1 count
-                    this.getStack().setCount(this.getStack().getCount() - 1);
-                }
-
-                this.plantOK = false;
             }
+
+            // plant other
+            if (this.getStack().getCount() > 0
+                    && spaceOK(this.world, pos
+                    , ((PlantBlock) ((BlockItem) this.getStack().getItem()).getBlock()))) {
+                // plant at own position
+                this.world.setBlockState(pos,
+                        ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState(),
+                        Block.NOTIFY_ALL);
+                // minus 1 count
+                this.getStack().setCount(this.getStack().getCount() - 1);
+            }
+
+            this.plantOK = false;
         }
     }
 
@@ -99,10 +95,7 @@ public abstract class ItemEntityMixin
         try {
             while (!ItemEntityThread.scheduledKill()) {
                 if (ItemEntityThread.taskEmpty()) {
-                    try {
-                        ItemEntityThread.sleep();
-                    } catch (Exception ignored) {
-                    }
+                    ItemEntityThread.sleep(5);
                     continue;
                 }
                 plant(((ItemEntityMixin) ItemEntityThread.popTask()));

@@ -2,6 +2,7 @@ package cool.muyucloud.saplanting.thread;
 
 import cool.muyucloud.saplanting.Saplanting;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 
 public class ItemEntityThread {
@@ -22,13 +23,13 @@ public class ItemEntityThread {
         this.taskQueue = new LinkedList<>();
     }
 
+    public static void sleep(int mills) throws InterruptedException {
+        Thread.sleep(mills);
+    }
+
     /* Thread Signature Accessors */
     public static boolean isThreadExists() {
         return SIGNAL.isThreadExists;
-    }
-
-    public static boolean isThreadWaiting() {
-        return SIGNAL.isThreadWaiting;
     }
 
     public static boolean scheduledKill() {
@@ -50,16 +51,6 @@ public class ItemEntityThread {
     public static void discardThread() {
         SIGNAL.scheduledKill = true;
         SIGNAL.taskQueue.clear();
-    }
-
-    public synchronized static void awaken() {
-        SIGNAL.thread.interrupt();
-        SIGNAL.isThreadWaiting = false;
-    }
-
-    public synchronized static void sleep() throws InterruptedException {
-        SIGNAL.isThreadWaiting = true;
-        SIGNAL.thread.wait();
     }
 
     public static void markAsStopped() {
