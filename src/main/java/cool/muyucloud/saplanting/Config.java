@@ -19,6 +19,23 @@ import java.util.HashSet;
 
 public class Config {
     private static final Config CONFIG = new Config();
+//    private static final String[] BOOL_PROPERTY_NAMES = {
+//            "plantEnable",
+//            "plantLarge",
+//            "blackListEnable",
+//            "allowSapling",
+//            "allowCrop",
+//            "allowMushroom",
+//            "allowFungus",
+//            "allowFlower",
+//            "allowOther",
+//            "showTitleOnPlayerConnected"
+//    };
+//    private static final String[] INT_PROPERTY_NAMES = {
+//            "plantDelay",
+//            "avoidDense",
+//            "playerAround"
+//    };
 
     private boolean plantEnable = true;
     private boolean plantLarge = true;
@@ -30,12 +47,28 @@ public class Config {
     private boolean allowFlower = false;
     private boolean allowOther = false;
     private boolean showTitleOnPlayerConnected = false;
+    private boolean ignoreShape = false;    // plant a sapling in a shape that would not let it grow
     private int plantDelay = 40;
     private int avoidDense = 2;
     private int playerAround = 2;
     private final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("saplanting.json");
     private final HashSet<Item> plantableItem = new HashSet<>();
     private final HashSet<Item> blackList = new HashSet<>();
+
+//    public static String[] getPropertyNames() {
+//        ArrayList<String> output = new ArrayList<>();
+//        output.addAll(Arrays.asList(BOOL_PROPERTY_NAMES));
+//        output.addAll(Arrays.asList(INT_PROPERTY_NAMES));
+//        return (String[]) output.toArray();
+//    }
+//
+//    public static String[] getBoolPropertyNames() {
+//        return BOOL_PROPERTY_NAMES;
+//    }
+//
+//    public static String[] getIntPropertyNames() {
+//        return INT_PROPERTY_NAMES;
+//    }
 
     public static boolean isPlantableItem(Item item) {
         return CONFIG.plantableItem.contains(item);
@@ -172,6 +205,10 @@ public class Config {
         return CONFIG.showTitleOnPlayerConnected;
     }
 
+    public static boolean getIgnoreShape() {
+        return CONFIG.ignoreShape;
+    }
+
     public static int getPlantDelay() {
         return CONFIG.plantDelay;
     }
@@ -222,6 +259,10 @@ public class Config {
 
     public static void setShowTitleOnPlayerConnected(boolean value) {
         CONFIG.showTitleOnPlayerConnected = value;
+    }
+
+    public static void setIgnoreShape(boolean value) {
+        CONFIG.ignoreShape = value;
     }
 
     public static void setPlantDelay(int plantDelay) {
@@ -310,7 +351,15 @@ public class Config {
 
     private boolean initShowTitleOnPlayerConnected(JsonObject jsonObject) {
         try {
-            this.allowOther = jsonObject.get("showTitleOnPlayerConnected").getAsBoolean();
+            this.showTitleOnPlayerConnected = jsonObject.get("showTitleOnPlayerConnected").getAsBoolean();
+            return true;
+        } catch (Exception ignored) {}
+        return false;
+    }
+
+    private boolean initIgnoreShape(JsonObject jsonObject) {
+        try {
+            this.ignoreShape = jsonObject.get("showTitleOnPlayerConnected").getAsBoolean();
             return true;
         } catch (Exception ignored) {}
         return false;
@@ -390,6 +439,7 @@ public class Config {
         output.append(indent).append("\"allowFlower\": ").append(allowFlower).append(",\n");
         output.append(indent).append("\"allowOther\": ").append(allowOther).append(",\n");
         output.append(indent).append("\"showTitleOnPlayerConnected\": ").append(showTitleOnPlayerConnected).append(",\n");
+        output.append(indent).append("\"ignoreShape\": ").append(ignoreShape).append(",\n");
         output.append(indent).append("\"plantDelay\": ").append(plantDelay).append(",\n");
         output.append(indent).append("\"avoidDense\": ").append(avoidDense).append(",\n");
         output.append(indent).append("\"playerAround\": ").append(playerAround).append(",\n");
@@ -473,6 +523,7 @@ public class Config {
                 initAllowFlower(jsonObject);
                 initAllowOther(jsonObject);
                 initShowTitleOnPlayerConnected(jsonObject);
+                initIgnoreShape(jsonObject);
                 initPlantDelay(jsonObject);
                 initAvoidDense(jsonObject);
                 initPlayerAround(jsonObject);
@@ -512,6 +563,8 @@ public class Config {
                         return initAllowOther(jsonObject);
                     case "showTitleOnPlayerConnected":
                         return initShowTitleOnPlayerConnected(jsonObject);
+                    case "ignoreShape":
+                        return initIgnoreShape(jsonObject);
                     case "plantDelay":
                         return initPlantDelay(jsonObject);
                     case "avoidDense":

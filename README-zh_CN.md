@@ -1,7 +1,7 @@
 ---
 title: "落苗生根(Fabric)使用手册"
 author: 暮宇_Twilighter
-date: 2022.3.24
+date: 2022.8.17
 output: pdf_document
 ---
 [![](http://cf.way2muchnoise.eu/full_saplanting_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/saplanting) [![Discord](https://img.shields.io/discord/966726130105217094)](https://discord.gg/JunKeKCJAY)  
@@ -14,7 +14,7 @@ output: pdf_document
 ## 简介  
 如果你还在为砍树后一地的掉落物而发愁，这个模组能够帮到你！  
 当一个掉落物掉在地上（如果这个方块允许这个物品被放置），它就会自动在两秒后种植在这个方块上。别担心，自动种植不会摧毁这个方块上方原有的方块，除非这个方块本身是可替换的（比如草、蕨等）。  
-另外，最新版本支持自动种植所有植物方块！不过这个功能默认被关闭，你需要手动开启；详见下方指令与设置文件。
+另外，最新版本支持自动种植所有植物方块！不过这个功能默认被关闭，你需要手动开启；详见下方[指令](#指令)与[设置文件](#设置文件)。
 
 ## 如何安装  
 1. 下载正确版本的jar文件；
@@ -23,7 +23,7 @@ output: pdf_document
 
 ## 设置文件  
 设置文件位于 ".../.minecraft/config/saplanting.json"  
-设置文件只会在一个存档被加载的时候才会读取并应用其中的设置，如果需要立刻应用其中内容，请见下方指令。
+设置文件只会在一个存档被加载的时候才会读取并应用其中的设置，如果需要立刻应用其中内容，请见下方[指令](#指令)。
 
  - plantEnable：启用自动种植，默认：true，期望：boolean  
  - plantLarge：尝试种植2x2的树，默认：true，期望：boolean  
@@ -35,6 +35,8 @@ output: pdf_document
  - allowFungus：启用地狱菇的自动种植，默认：false，期望：boolean
  - allowFlower：启用花的自动种植，默认：false，期望：boolean
  - allowOther：启用其他植物的自动种植，默认：false，期望：boolean
+ - showTitleOnPlayerConnected: 在**管理员**加入服务器时，显示当前服务器是否启用Saplanting，默认：false，期望：boolean  
+ - ignoreShape: 不论树苗是否能在1x1的形状下生长，依然种植，默认：false，期望：boolean
  - plantDelay：自动种植的延迟（单位tick），默认：40，期望：nonnegative integers
  - avoidDense：其他树的检测半径（如果有其他树则不种植），默认：2，expect nonnegative integers
  - playerAround：玩家的检测半径（如果有玩家则不种植），默认：2，expect nonnegative integers

@@ -1,12 +1,7 @@
 ---
 title: "Saplanting(Fabric) Manual"
 author: MUYU_Twilighter
-<<<<<<< HEAD
-date: 2022.4.24
-=======
-date: 2022.3.24
->>>>>>> cbf8f254f6218ab8dae95c3289e693c576700bec
-output: pdf_document
+date: 2022.8.17
 ---
 [![](http://cf.way2muchnoise.eu/full_saplanting_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/saplanting) [![Discord](https://img.shields.io/discord/966726130105217094)](https://discord.gg/JunKeKCJAY)  
 # Saplanting(Fabric)
@@ -20,7 +15,7 @@ This is a fabric mod, fabric api is required.
 
 If you can not spare enough time and effort to plant saplings in Minecraft or the players on server are too lazy to do so, this mod will help you!  
 When a sapling item drops on dirt(or something else that let saplings grow), it will automatically turn into sapling block in 2 seconds. The sapling-planting will not destroy the block that already take up the place(except air and replaceable blocks).  
-What's more surprising, other plants can be automatically planted now! But this feature is disabled by default, use commands below or configure the JSON file.
+What's more surprising, other plants can be automatically planted now! But this feature is disabled by default, use [commands](#Commands) below or [configure the JSON file](#Configurations).
 
 ## How to Install
 
@@ -31,7 +26,7 @@ What's more surprising, other plants can be automatically planted now! But this 
 ## Configurations
 
 Config file is located at ".../.minecraft/config/saplanting.json"  
-Config file will only be automatically loaded when a world-save is loaded. If you want the changes in this file loaded manually, use commands to do so.
+Config file will only be automatically loaded when a world-save is loaded. If you want the changes in this file loaded manually, use [commands](#Commands) to do so.
 
  - plantEnable: Enable auto-planting, default: true, expect: boolean  
  - plantLarge: Try to plant 2x2 trees, default: true, expect: boolean  
@@ -43,6 +38,8 @@ Only for sapling blocks that can be planted in shape of 2x2.
  - allowFungus: Enable auto-planting for fungus, default: false, expect: boolean
  - allowFlower: Enable auto-planting for flowers, default: false, expect: boolean
  - allowOther: Enable auto-planting for other plants, default: false, expect: boolean
+ - showTitleOnPlayerConnected: Show enability for Saplanting on a server when an **operator** connected to this server, default: false, expect: boolean  
+ - ignoreShape: Plant no matter the sapling can grow in shape of 1x1, default: false, expect: boolean
  - plantDelay: How many ticks before the sapling drop will be planted, default: 40, expect: nonnegative integers
  - avoidDense: The radius of area that will not plant when selected area already got other trees, default: 2, expect nonnegative integers
  - playerAround: Not to plant if player around, default: 2, expect nonnegative integers
