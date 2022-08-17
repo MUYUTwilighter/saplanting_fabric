@@ -1,11 +1,7 @@
 ---
 title: "Saplanting(Fabric) Manual"
 author: MUYU_Twilighter
-<<<<<<< HEAD
 date: 2022.8.17
-=======
-date: 2022.4.24
->>>>>>> 6d7807fe07c41d7217c679761c0be9156bda5637
 ---
 [![](http://cf.way2muchnoise.eu/full_saplanting_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/saplanting) [![Discord](https://img.shields.io/discord/966726130105217094)](https://discord.gg/JunKeKCJAY)  
 # Saplanting(Fabric)
