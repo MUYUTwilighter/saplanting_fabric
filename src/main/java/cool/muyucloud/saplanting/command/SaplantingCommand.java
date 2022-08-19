@@ -216,9 +216,10 @@ public class SaplantingCommand {
             }
             case 2 -> {
                 target.sendFeedback(Text.literal(" - allowOther:    " + Config.getAllowOther()), false);
-                target.sendFeedback(Text.literal(" - ShowTitle... : " + Config.getAllowOther()).setStyle(Style.EMPTY
+                target.sendFeedback(Text.literal(" - showTitle... : " + Config.getAllowOther()).setStyle(Style.EMPTY
                                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("showTitleOnPlayerConnected")))),
                         false);
+                target.sendFeedback(Text.literal(" - ignoreShape:   " + Config.getIgnoreShape()), false);
                 target.sendFeedback(Text.literal(" - plantDelay:    " + Config.getPlantDelay()), false);
                 target.sendFeedback(Text.literal(" - avoidDense:    " + Config.getAvoidDense()), false);
                 target.sendFeedback(Text.literal(" - playerAround:  " + Config.getPlayerAround()), false);
