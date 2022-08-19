@@ -1,0 +1,17 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "package": "cool.muyucloud.saplanting.mixin",
+    "compatibilityLevel": "JAVA_8",
+    "mixins": [
+        "ItemEntityMixin",
+        "SaplingBlockAccessor",
+        "SaplingGeneratorAccessor",
+        "ServerWorldMixin"
+    ],
+    "client": [
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}
