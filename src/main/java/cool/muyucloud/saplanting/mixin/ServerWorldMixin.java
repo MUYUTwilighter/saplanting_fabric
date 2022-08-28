@@ -5,6 +5,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -20,7 +21,7 @@ public abstract class ServerWorldMixin {
     public void onPlayerConnected(ServerPlayerEntity player, CallbackInfo ci) {
         // is player OP and saplanting disabled
         if (this.server.getPlayerManager().isOperator(player.getGameProfile()) && !Config.getPlantEnable() && Config.getShowTitleOnPlayerConnected()) {
-            player.sendMessage(Text.translatable("saplanting.info.chat.onPlayerConnected.disabled"), false);
+            player.sendMessage(new TranslatableText("saplanting.info.chat.onPlayerConnected.disabled"), false);
         }
     }
 }
