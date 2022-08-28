@@ -13,7 +13,7 @@
   "saplanting.commands.saplanting.load.property.fail": "Failed to load due to unknown reason.",
   "saplanting.commands.saplanting.load.property.success.suggestEvent": "Show value",
 
-  "saplanting.commands.saplanting.property.set": " has already been set to ",
+  "saplanting.commands.saplanting.property.set": " was successfully set to ",
   "saplanting.commands.saplanting.property.show": " is ",
 
   "saplanting.commands.saplanting.blackList.enable": "Enabled black list.",

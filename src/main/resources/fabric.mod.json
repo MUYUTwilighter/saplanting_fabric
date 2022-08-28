@@ -9,7 +9,7 @@
   ],
   "contact": {
     "website": "muyucloud.cool",
-    "repo": "https://github.com/MUYUTwilighter/saplanting_fabric.git"
+    "repo": "https://github.com/MUYUTwilighter/saplanting_fabric"
   },
   "license": "All-Rights-Reserved",
   "icon": "assets/saplanting/icon.png",
@@ -27,6 +27,6 @@
   ],
   "depends": {
     "fabric": "*",
-    "minecraft": "1.19.2"
+    "minecraft": "1.19"
   }
 }
