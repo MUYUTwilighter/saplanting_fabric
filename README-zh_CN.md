@@ -1,7 +1,7 @@
 ---
 title: "落苗生根(Fabric)使用手册"
 author: 暮宇_Twilighter
-date: 2022.8.17
+date: 2022.8.4
 output: pdf_document
 ---
 [![](http://cf.way2muchnoise.eu/full_saplanting_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/saplanting) [![Discord](https://img.shields.io/discord/966726130105217094)](https://discord.gg/JunKeKCJAY)  
@@ -35,8 +35,9 @@ output: pdf_document
  - allowFungus：启用地狱菇的自动种植，默认：false，期望：boolean
  - allowFlower：启用花的自动种植，默认：false，期望：boolean
  - allowOther：启用其他植物的自动种植，默认：false，期望：boolean
- - showTitleOnPlayerConnected: 在**管理员**加入服务器时，显示当前服务器是否启用Saplanting，默认：false，期望：boolean  
+ - showTitleOnOpConnected: 在**管理员**加入服务器时，显示当前服务器是否启用Saplanting，默认：false，期望：boolean  
  - ignoreShape: 不论树苗是否能在1x1的形状下生长，依然种植，默认：false，期望：boolean
+ - language: 使用的语言，默认："en_us"，期望：String
  - plantDelay：自动种植的延迟（单位tick），默认：40，期望：nonnegative integers
  - avoidDense：其他树的检测半径（如果有其他树则不种植），默认：2，expect nonnegative integers
  - playerAround：玩家的检测半径（如果有玩家则不种植），默认：2，expect nonnegative integers
@@ -46,29 +47,27 @@ output: pdf_document
 所有的指令都需要管理员权限，指令的回馈默认只能返回简体中文。  
 由指令作出的所有更改只会在存档关闭时被写入文件，如果想要立刻保存，请见下方指令。
 
-### 查询设置  
- - /saplanting：显示当前所有设置；
- - /saplanting \<设置项名称\>：显示指定设置项的值。
+### 功能性设置
+- /saplanting：显示当前所有设置；
+- /saplanting property \<设置项名称\> \<值\>：将指定设置项设置为指定值；
+- /saplanting property \<设置项名称\>：显示指定设置项的值。
 
-### 与设置文件交互  
- - /saplanting load：从设置文件加载所有设置；
- - /saplanting load <设置项名称>：从设置文件加载指定设置；
- - /saplanting save：将当前设置写入设置文件。
-
-### 黑名单  
-黑名单和形如"allowXXX"的设置项功能互补。  
-例如，如果一个物品在黑名单中，不论对应的"allowXXX"是否为真，这个物品都不会被种植。  
+### 文件操作
+- /saplanting file load：从设置文件加载所有设置；
+- /saplanting file save：将当前设置写入设置文件。
+- 
+### 黑名单
+黑名单和其他的设置项功能互补。  
+例如，如果一个橡木树苗在黑名单中，不论对应的"allowSapling"是否为真，这个物品都不会被种植。  
 反之亦然。
- - /saplanting blackList：显示黑名单是否被开启；
- - /saplanting blackList enable：开启黑名单；
- - /saplanting blackList disable：禁用黑名单；
- - /saplanting blackList list：显示黑名单列表；
- - /saplanting blackList add \<物品ID\>：将指定物品加入黑名单；  
- 如果指定物品已存在于黑名单或这个物品不是植物方块，则不会加入到黑名单中。
- - /saplanting blackList remove \<物品ID\>：将指定物品从黑名单中移除。
+- /saplanting blackList：显示黑名单
+- /saplanting blackList add \<物品ID\>：将指定物品加入黑名单；  
+  如果指定物品已存在于黑名单或这个物品不是植物方块，则不会加入到黑名单中。
+- /saplanting blackList remove \<物品ID\>：将指定物品从黑名单中移除。
 
-### 更改其他设置  
- - /saplanting \<设置项名称\> \<值\>：将指定设置项设置为指定值；
+### 语言
+- /saplanting language：查询当前使用的语言；
+- /saplanting language switch \<值>：切换到指定语言；
 
 ## 共享与使用准则
 ### 分享相关
@@ -96,6 +95,5 @@ output: pdf_document
 QQ交流群：https://t.bilibili.com/563537522129988306  
 CurseForge：https://www.curseforge.com/minecraft/mc-mods/saplanting  
 GitHub：https://github.com/MUYUTwilighter/saplanting_fabric  
-Gitee：https://gitee.com/muyu-twilighter/saplanting_fabric  
 MC模组百科：https://www.mcmod.cn/class/5221.html  
 哔哩哔哩：https://space.bilibili.com/291040380

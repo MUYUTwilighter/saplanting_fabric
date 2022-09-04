@@ -38,8 +38,9 @@ Only for sapling blocks that can be planted in shape of 2x2.
  - allowFungus: Enable auto-planting for fungus, default: false, expect: boolean
  - allowFlower: Enable auto-planting for flowers, default: false, expect: boolean
  - allowOther: Enable auto-planting for other plants, default: false, expect: boolean
- - showTitleOnPlayerConnected: Show enability for Saplanting on a server when an **operator** connected to this server, default: false, expect: boolean  
+ - showTitleOnOpConnected: Show disability for Saplanting on a server when an **operator** connected to this server, default: false, expect: boolean  
  - ignoreShape: Plant no matter the sapling can grow in shape of 1x1, default: false, expect: boolean
+ - language: Current language of Saplanting, default: "en_us", expect: String
  - plantDelay: How many ticks before the sapling drop will be planted, default: 40, expect: nonnegative integers
  - avoidDense: The radius of area that will not plant when selected area already got other trees, default: 2, expect nonnegative integers
  - playerAround: Not to plant if player around, default: 2, expect nonnegative integers
@@ -50,29 +51,27 @@ Only for sapling blocks that can be planted in shape of 2x2.
 All the commands require admin-permission to execute, feedback only supports Simplified Chinese by default.  
 All the changes made by commands will not be saved to config file immediately. If you want to save them manually, use commands below.
 
-### Overview
- - /saplanting: show all current properties;
- - /saplanting \<PropertyName\>: show value of target property.
+### Functional Properties
+- /saplanting: show all current properties;
+- /saplanting property \<PropertyName\>: show value of target property.
+- /saplanting property \<PropertyName\> \<value\>: set value of target property.
 
 ### Configure File IO
- - /saplanting load: load properties from file;
- - /saplanting load <PropertyName>: load target property from file;
- - /saplanting save: save current properties into file.
+- /saplanting file load: load properties from file;
+- /saplanting file save: save current properties into file.
 
 ### Black List  
 Black list and properties that is named like "allowXXX" complements each other.  
 For instance, if an item is in black list, no matter the corresponding allowXXX is true or false, the item will not be planted.  
 And vice versa.
- - /saplanting blackList: show black list inability;
- - /saplanting blackList enable: enable black list;
- - /saplanting blackList disable: disable black list;
- - /saplanting blackList list: show content of black list;
+ - /saplanting blackList: show content of black list;
  - /saplanting blackList add \<Item\>: add item to black list;  
  If target item already exists in black list or is not a plant, it will not be added to the black list.
  - /saplanting blackList remove \<Item\>: remove item from black list.
 
-### Change Property
- - /saplanting \<PropertyName\> \<value\>: set value of target property.
+### Language
+- /saplanting language: show current language.
+- /saplanting language switch \<Lang>: switch to target language.
 
 ## Rules in distribution and usage
 ### Distribution related
@@ -99,6 +98,5 @@ buy me a coffee：https://afdian.net/@muyucloud
 Chat Group from QQ: https://t.bilibili.com/563537522129988306  
 CurseForge: https://www.curseforge.com/minecraft/mc-mods/saplanting  
 GitHub: https://github.com/MUYUTwilighter/saplanting_fabric  
-Gitee: https://gitee.com/muyu-twilighter/saplanting_fabric  
 MCMOD: https://www.mcmod.cn/class/5221.html  
 bilibili: https://space.bilibili.com/291040380
