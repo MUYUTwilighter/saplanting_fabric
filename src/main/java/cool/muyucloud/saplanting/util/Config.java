@@ -38,7 +38,7 @@ public class Config {
         this.properties.addProperty("plantLarge", true);
         this.properties.addProperty("blackListEnable", true);
         this.properties.addProperty("multiThread", true);
-        this.properties.addProperty("allowSapling", false);
+        this.properties.addProperty("allowSapling", true);
         this.properties.addProperty("allowCrop", false);
         this.properties.addProperty("allowMushroom", false);
         this.properties.addProperty("allowFungus", false);
@@ -107,9 +107,9 @@ public class Config {
                         } else {
                             if (Objects.equals(key, "language")) {
                                 if (!langs.contains(src.getAsString())) {
+                                    this.properties.addProperty(key, "en_us");
                                     continue;
                                 }
-                                Translation.updateLanguage(src.getAsString());
                             }
                             this.properties.addProperty(key, src.getAsString());
                         }

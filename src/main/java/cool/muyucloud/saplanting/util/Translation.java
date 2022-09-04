@@ -6,15 +6,31 @@ import org.apache.commons.io.IOUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 public class Translation {
-    private static HashMap<String, String> MAP;
+    private static final Translation TRANSLATION = new Translation();
+    
+    private HashMap<String, String> map;
+    
+    public Translation() {
+        String json;
+        try {
+            json = IOUtils.toString(
+                Objects.requireNonNull(
+                    Translation.class.getClassLoader()
+                        .getResourceAsStream("assets/saplanting/lang/en_us.json")),
+                StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            throw new NullPointerException("Can not read default language file!");
+        }
+        this.map = (new Gson()).fromJson(json, new TypeToken<HashMap<String, String>>() {
+        }.getType());
+    }
 
     public static String translate(String key) {
-        if (MAP.containsKey(key)) {
-            return MAP.get(key);
+        if (TRANSLATION.map.containsKey(key)) {
+            return TRANSLATION.map.get(key);
         }
         return key;
     }
@@ -30,7 +46,7 @@ public class Translation {
         } catch (Exception e) {
             return false;
         }
-        MAP = (new Gson()).fromJson(json, new TypeToken<HashMap<String, String>>() {
+        TRANSLATION.map = (new Gson()).fromJson(json, new TypeToken<HashMap<String, String>>() {
         }.getType());
         return true;
     }

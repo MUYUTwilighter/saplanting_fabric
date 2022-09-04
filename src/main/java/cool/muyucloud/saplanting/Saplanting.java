@@ -26,15 +26,15 @@ public class Saplanting implements ModInitializer {
         LOGGER.info("Initializing.");
         LOGGER.info("Saplanting waking up! OwO");
 
+        LOGGER.info("Updating language.");
+        Translation.updateLanguage(CONFIG.getAsString("language"));
+
         LOGGER.info("Registering events.");
         ServerLifecycleEvents.SERVER_STARTING.register(this::onServerStarting);
         ServerLifecycleEvents.SERVER_STOPPING.register(this::onServerStopping);
 
         LOGGER.info("Registering commands.");
         CommandRegistrationCallback.EVENT.register(Command::register);
-
-        LOGGER.info("Updating language.");
-        Translation.updateLanguage(CONFIG.getAsString("language"));
     }
 
     private void onServerStopping(MinecraftServer server) {
