@@ -1,18 +1,17 @@
 package cool.muyucloud.saplanting.mixin;
 
-import cool.muyucloud.saplanting.Config;
+import cool.muyucloud.saplanting.util.Config;
 import cool.muyucloud.saplanting.Saplanting;
-import cool.muyucloud.saplanting.access.ItemEntityAccess;
-import cool.muyucloud.saplanting.thread.ItemEntityThread;
 import net.minecraft.block.*;
 import net.minecraft.block.sapling.LargeTreeSaplingGenerator;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.item.*;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.tag.BlockTags;
-import net.minecraft.util.math.*;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.Logger;
@@ -22,215 +21,224 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.LinkedList;
+
 @Mixin(ItemEntity.class)
-public abstract class ItemEntityMixin
-        extends Entity implements ItemEntityAccess {
+public abstract class ItemEntityMixin extends Entity {
     @Shadow
     public abstract ItemStack getStack();
 
-    private int plantAge = 0;
+    private static final Config CONFIG = Saplanting.getConfig();
     private static final Logger LOGGER = Saplanting.getLogger();
-    private boolean plantOK = false;
+
+    private static final LinkedList<ItemEntityMixin> TASKS = new LinkedList<>();
+
+    int plantAge = 0;
 
     public ItemEntityMixin(EntityType<?> type, World world) {
         super(type, world);
     }
 
+    /**
+     * Pre-operation that directly injected into ItemEntity#tick()
+     * Including:
+     * 1. filter unwanted item.
+     * 2. kill/awaken thread according to property "multiThread"
+     * 3. dispatch item entity as tasks and deal with them
+     *  */
     @Inject(method = "tick", at = @At("TAIL"))
     public void tick(CallbackInfo ci) {
-        if (!this.world.isClient()) {
-            // check if thread died
-            if (!ItemEntityThread.isThreadExists()) {
-                LOGGER.info("Creating thread for entity processing.");
-                ItemEntityThread.initThread(ItemEntityMixin::run);
-            }
-
-            // add this item to task queue
-            if (!this.plantOK) {
-                ItemEntityThread.addTask(this);
-                return;
-            }
-
-            // plant if ok to do so
-            if (!this.plantable()) {
-                this.plantOK = false;
-                return;
-            }
-
-            // correct position
-            BlockPos pos = (this.getPos().getY() % 1 != 0) ? this.getBlockPos().up() :
-                    this.getBlockPos();
-
-            // plant 2x2 tree
-            if (Config.getPlantLarge()
-                    && ((BlockItem) this.getStack().getItem()).getBlock() instanceof SaplingBlock
-                    && ((SaplingBlockAccessor) ((BlockItem) this.getStack().getItem()).getBlock()).getGenerator() instanceof LargeTreeSaplingGenerator
-                    && this.getStack().getCount() >= 4) {
-                for (BlockPos tmpos : BlockPos.iterate(pos.add(-1, 0, -1), pos)) {
-                    if (spaceOK2x2(this.world, tmpos, ((PlantBlock) ((BlockItem) this.getStack().getItem()).getBlock()))) {
-                        fillSapling(this.world, tmpos, ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState());
-                        this.getStack().setCount(this.getStack().getCount() - 4);
-                        this.plantOK = false;
-                        return;
-                    }
-                }
-            }
-
-            // plant other
-            if (this.getStack().getCount() > 0
-                    && spaceOK(this.world, pos
-                    , ((PlantBlock) ((BlockItem) this.getStack().getItem()).getBlock()))
-                    && shapeOK(this.getStack())) {
-                // plant at own position
-                this.world.setBlockState(pos,
-                        ((BlockItem) this.getStack().getItem()).getBlock().getDefaultState(),
-                        Block.NOTIFY_ALL);
-                // minus 1 count
-                this.getStack().setCount(this.getStack().getCount() - 1);
-            }
-
-            this.plantOK = false;
-        }
-    }
-
-    private static boolean shapeOK(ItemStack itemStack) {
-        if (Config.getIgnoreShape()) {
-            return true;
-        }
-
-        return !(itemStack.getCount() < 4 &&
-                ((SaplingGeneratorAccessor) ((SaplingBlockAccessor) ((BlockItem) itemStack.getItem()).getBlock()).getGenerator()).getTreeFeature(Random.create(), true) == null);
-    }
-
-    private synchronized static void run() {
-        try {
-            while (!ItemEntityThread.scheduledKill()) {
-                if (ItemEntityThread.taskEmpty()) {
-                    ItemEntityThread.sleep(5);
-                    continue;
-                }
-                plant(((ItemEntityMixin) ItemEntityThread.popTask()));
-            }
-        } catch (Exception e) {
-            LOGGER.error("Saplanting item entity process exited unexpectedly.");
-            e.printStackTrace();
-        }
-        LOGGER.info("Saplanting item entity process discarding");
-        ItemEntityThread.markAsStopped();
-    }
-
-    private static void plant(ItemEntityMixin itemEntityMixin) {
-        // exit if auto plant not enabled
-        if (!Config.getPlantEnable()) {
+        Item item = this.getStack().getItem();
+        /* Is wanted item */
+        if (this.world.isClient() || !Saplanting.isPlantItem(item) || !CONFIG.getAsBoolean("plantEnable")) {
             return;
         }
 
-        // schedule planting
-        if (itemEntityMixin.plantable()) {  // if OK to plant, plus age
-            ++itemEntityMixin.plantAge;
-        } else {                            // if not, reset age and exit
-            itemEntityMixin.plantAge = 0;
+        /* Kill if multi thread disabled, and deal with item here */
+        if (!CONFIG.getAsBoolean("multiThread")) {
+            Saplanting.THREAD_ALIVE = false;
+            this.run();
             return;
         }
 
-        // if age do not reach plant delay, exit
-        if (itemEntityMixin.plantAge < Config.getPlantDelay()) {
-            return;
+        /* Run Thread if thread not alive */
+        if (!Saplanting.THREAD_ALIVE) {
+            Saplanting.THREAD_ALIVE = true;
+            LOGGER.info("Launching Saplanting core thread.");
+            Thread THREAD = new Thread(ItemEntityMixin::multiThreadRun);
+            THREAD.setName("SaplantingCoreThread");
+            THREAD.start();
         }
 
-        // reset age
-        itemEntityMixin.plantAge = 0;
-
-        // plant around player? and is player around?
-        if (Config.getPlayerAround() > 0
-                && itemEntityMixin.world.isPlayerInRange(itemEntityMixin.getX()
-                , itemEntityMixin.getY(), itemEntityMixin.getZ(), Config.getPlayerAround())) {
-            return;
-        }
-
-        // avoid dense? and is too dense?
-        if (Config.getAvoidDense() > 0 && itemEntityMixin.hasOther()) {
-            return;
-        }
-
-        itemEntityMixin.plantOK = true;
+        /**/
+        TASKS.add(this);
     }
 
-    /*
-     * This check:
-     * 1. world loaded
-     * 2. is on ground
-     * 3. is permitted to plant in config
-     * 4. this.spaceOK();
-     *  */
-    private boolean plantable() {
-        // correct position
-        BlockPos pos = (this.getPos().getY() % 1 != 0) ? this.getBlockPos().up() : this.getBlockPos();
-
-        return this.world != null  // is world loaded
-                // is touching ground
-                && this.onGround
-                // is item a block
-                && Config.itemOK(this.getStack().getItem())
-                // is space ok
-                && spaceOK(this.world, pos, ((PlantBlock) ((BlockItem) this.getStack().getItem()).getBlock()));
-    }
-
-    /* This check:
-     * 1. block.canPlaceAt()
-     * 2. temp block pos is replaceable
-     * 3. is not a waterlogged-only block
-     * */
-    private static boolean spaceOK(World world, BlockPos pos, PlantBlock block) {
-        // if this is a block that CAN ONLY be planted in water
-        if (block instanceof FluidFillable && block.getDefaultState().getFluidState().isOf(Fluids.WATER)) {
+    /**
+     * This check validation of plant-operation every single game-tick,
+     * it goes before round-check
+     * Including:
+     * 1. item is on ground
+     * 2. saplanting is enabled
+     * 3. is not a water-oriented plant
+     * 4. block BELOW the itemEntity allows the plant to grow
+     * 5. block AT the itemEntity is replaceable
+     */
+    private boolean tickCheck() {
+        BlockItem item = ((BlockItem) this.getStack().getItem());
+        if (!this.onGround || !CONFIG.getAsBoolean("plantEnable") || !Saplanting.isPlantAllowed(item)) {
             return false;
         }
-        return block.canPlaceAt(block.getDefaultState(), world, pos) && world.getBlockState(pos).getMaterial().isReplaceable();
+
+        BlockPos pos = this.getBlockPos();
+        if (this.getY() % 1 != 0) {
+            pos = pos.up();
+        }
+
+        BlockState state = item.getBlock().getDefaultState();
+        if (!state.getFluidState().isEmpty()) {
+            return false;
+        }
+
+        return state.canPlaceAt(world, pos) && world.getBlockState(pos).getMaterial().isReplaceable();
     }
 
-    private static boolean spaceOK2x2(World world, BlockPos pos, PlantBlock sapling) {
-        for (BlockPos tmpos : BlockPos.iterate(pos, pos.add(1, 0, 1))) {
-            if (!spaceOK(world, tmpos, sapling)) {
-                return false;
+    /**
+     * This check validation of plant-operation every time when reaching plant-delay,
+     * it goes after tick-check
+     * Including:
+     * 1. are players nearby?
+     * 2. are there other blocks nearby representing there might be trees?
+     */
+    private boolean roundCheck() {
+        PlantBlock block = ((PlantBlock) ((BlockItem) this.getStack().getItem()).getBlock());
+        BlockPos pos = this.getBlockPos();
+        if (this.getY() % 1 != 0) {
+            pos = pos.up();
+        }
+
+        /* Player Nearby Check */
+        int playerAround = CONFIG.getAsInt("playerAround");
+        if (playerAround > 0 && world.isPlayerInRange(getX(), getY(), getZ(), playerAround)) {
+            return false;
+        }
+
+        int avoidDense = CONFIG.getAsInt("avoidDense");
+        if (block instanceof SaplingBlock) {
+            /* Avoid Dense Check */
+            if (avoidDense > 0) {
+                for (BlockPos tmpPos : BlockPos.iterate(
+                    pos.add(avoidDense, avoidDense, avoidDense),
+                    pos.add(-avoidDense, -avoidDense, -avoidDense))) {
+                    Block tmpBlock = world.getBlockState(tmpPos).getBlock();
+                    BlockState state = tmpBlock.getDefaultState();
+                    if (tmpBlock instanceof LeavesBlock
+                        || tmpBlock instanceof SaplingBlock
+                        || state.isIn(BlockTags.LOGS)) {
+                        return false;
+                    }
+                }
             }
         }
         return true;
     }
 
-    private boolean hasOther() {
-        if (!(((BlockItem) this.getStack().getItem()).getBlock() instanceof SaplingBlock)) {
-            return false;
+    /**
+     * Plant operation, but also combines some checks.
+     * Including:
+     * 1. is planting large tree allowed? is it a large tree? So then do planting
+     * 2. is it available to grow a small tree? So then do planting
+     * Both of above involve environment check
+     */
+    private void plant() {
+        ItemStack stack = this.getStack();
+        PlantBlock block = ((PlantBlock) ((BlockItem) stack.getItem()).getBlock());
+        BlockState state = block.getDefaultState();
+        BlockPos pos = this.getBlockPos();
+        if (this.getY() % 1 != 0) {
+            pos = pos.up();
         }
 
-        for (ItemEntity entity : this.world.getEntitiesByType(EntityType.ITEM, Box.from(BlockBox.create(
-                this.getBlockPos().add(-Config.getAvoidDense(), -Config.getAvoidDense(), -Config.getAvoidDense()),
-                this.getBlockPos().add(Config.getAvoidDense(), Config.getAvoidDense(), Config.getAvoidDense()))), entity -> true)) {
-            if (((ItemEntityAccess) entity).isPlantOK()) {
-                return true;
+        if (block instanceof SaplingBlock) {
+            SaplingGeneratorAccessor generator = ((SaplingGeneratorAccessor) ((SaplingBlockAccessor) block).getGenerator());
+            /* Plant Large Tree */
+            if (CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && generator instanceof LargeTreeSaplingGenerator) {
+                for (BlockPos tmpPos : BlockPos.iterate(pos, pos.add(-1, 0, -1))) {
+                    if (block.canPlaceAt(state, world, tmpPos) && world.getBlockState(tmpPos).getMaterial().isReplaceable()
+                        && block.canPlaceAt(state, world, tmpPos.add(1, 0, 0)) && world.getBlockState(tmpPos.add(1, 0, 0)).getMaterial().isReplaceable()
+                        && block.canPlaceAt(state, world, tmpPos.add(1, 0, 1)) && world.getBlockState(tmpPos.add(1, 0, 1)).getMaterial().isReplaceable()
+                        && block.canPlaceAt(state, world, tmpPos.add(0, 0, 1)) && world.getBlockState(tmpPos.add(0, 0, 1)).getMaterial().isReplaceable()) {
+                        world.setBlockState(tmpPos, state, Block.NOTIFY_ALL);
+                        world.setBlockState(tmpPos.add(1, 0, 0), state, Block.NOTIFY_ALL);
+                        world.setBlockState(tmpPos.add(0, 0, 1), state, Block.NOTIFY_ALL);
+                        world.setBlockState(tmpPos.add(1, 0, 1), state, Block.NOTIFY_ALL);
+                        stack.setCount(stack.getCount() - 4);
+                        return;
+                    }
+                }
+            }
+
+            /* Ignore Shape */
+            if (!CONFIG.getAsBoolean("ignoreShape") && generator.getTreeFeature(Random.create(), true) == null) {
+                return;
             }
         }
 
-        for (BlockPos pos : BlockPos.iterate(
-                this.getBlockPos().add(-Config.getAvoidDense(), -Config.getAvoidDense(), -Config.getAvoidDense()),
-                this.getBlockPos().add(Config.getAvoidDense(), Config.getAvoidDense(), Config.getAvoidDense()))) {
-            if (world.getBlockState(pos).getBlock() instanceof LeavesBlock
-                    || world.getBlockState(pos).getBlock() instanceof SaplingBlock
-                    || world.getBlockState(pos).isIn(BlockTags.LOGS)) {
-                return true;
+        /* Plant Small Objects(including sapling) */
+        world.setBlockState(pos, state, Block.NOTIFY_ALL);
+        stack.setCount(stack.getCount() - 1);
+    }
+
+    /**
+     * Operations that deal with item entity every tick.
+     * Saplanting.isPlantItem(item) should be done before.
+     * Including:
+     * 1. plantAge counter.
+     * 2. tickCheck() and reset plantAge
+     * 3. plantAge check then roundCheck()
+     * 4. plant();
+    * */
+    public void run() {
+        ++this.plantAge;
+
+        if (!this.tickCheck()) {
+            this.plantAge = 0;
+            return;
+        }
+
+        if (this.plantAge < CONFIG.getAsInt("plantDelay")) {
+            return;
+        }
+
+        if (this.roundCheck()) {
+            this.plant();
+        }
+        this.plantAge = 0;
+    }
+
+    /**
+     * Operations that take item entity from tasks and deal with them.
+     * Including:
+     * 1. take item entity from tasks and throw it to ItemEntityMixin::run()
+     * 2. auto stop and sleep
+     * */
+    private static void multiThreadRun() {
+        try {
+            while (Saplanting.THREAD_ALIVE && CONFIG.getAsBoolean("plantEnable")) {
+                if (TASKS.isEmpty()) {
+                    Thread.sleep(50);
+                    continue;
+                }
+
+                while (!TASKS.isEmpty() && CONFIG.getAsBoolean("plantEnable")) {
+                    TASKS.removeFirst().run();
+                }
             }
+            LOGGER.info("Saplanting core thread exiting.");
+        } catch (Exception e) {
+            LOGGER.info("Saplanting core thread exited unexpectedly!");
+            e.printStackTrace();
         }
-        return false;
-    }
-
-    private static void fillSapling(World world, BlockPos pos, BlockState blockState) {
-        for (BlockPos tmpos : BlockPos.iterate(pos, pos.add(1, 0, 1))) {
-            world.setBlockState(tmpos, blockState);
-        }
-    }
-
-    @Override
-    public boolean isPlantOK() {
-        return this.plantOK;
+        Saplanting.THREAD_ALIVE = false;
     }
 }
