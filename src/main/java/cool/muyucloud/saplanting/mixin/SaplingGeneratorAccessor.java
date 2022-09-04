@@ -11,5 +11,5 @@ import java.util.Random;
 @Mixin(SaplingGenerator.class)
 public interface SaplingGeneratorAccessor {
     @Invoker("createTreeFeature")
-    ConfiguredFeature<TreeFeatureConfig, ?> getTreeFeature(Random random, boolean bees);
+    ConfiguredFeature<TreeFeatureConfig, ?> createTreeFeature(Random random, boolean bees);
 }

@@ -15,9 +15,7 @@
   "icon": "assets/saplanting/icon.png",
   "environment": "*",
   "entrypoints": {
-    "client": [
-      "cool.muyucloud.saplanting.client.SaplantingClient"
-    ],
+    "client": [],
     "main": [
       "cool.muyucloud.saplanting.Saplanting"
     ]
