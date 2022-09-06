@@ -17,6 +17,7 @@ import java.util.List;
 
 public class Command {
     private static final Config CONFIG = Saplanting.getConfig();
+    private static final Config DEFAULT_CONFIG = Saplanting.getDefaultConfig();
     private static final Style CLICKABLE_COMMAND = Style.EMPTY
         .withColor(TextColor.parse("green"))
         .withUnderline(true);
@@ -39,9 +40,13 @@ public class Command {
             if (CONFIG.getType(key) == Boolean.class) {
                 propertyE.then(CommandManager.argument("value", BoolArgumentType.bool())
                     .executes((context -> setProperty(key, BoolArgumentType.getBool(context, "value"), context.getSource()))));
+                propertyE.then(CommandManager.literal("default")
+                    .executes(context -> setProperty(key, DEFAULT_CONFIG.getAsBoolean(key), context.getSource())));
             } else if (CONFIG.getType(key) == Integer.class) {
                 propertyE.then(CommandManager.argument("value", IntegerArgumentType.integer())
                     .executes((context -> setProperty(key, IntegerArgumentType.getInteger(context, "value"), context.getSource()))));
+                propertyE.then(CommandManager.literal("default")
+                    .executes(context -> setProperty(key, DEFAULT_CONFIG.getAsInt(key), context.getSource())));
             }
             property.then(propertyE);
         }
@@ -66,19 +71,23 @@ public class Command {
         /* /saplanting blackList <OPERATION> [ARG] */
         LiteralArgumentBuilder<ServerCommandSource> blackList = CommandManager.literal("blackList");
         blackList.executes(context -> displayBlackList(1, context.getSource()));
+        // saplanting blackList <page>
         blackList.then(CommandManager.argument("page", IntegerArgumentType.integer())
             .executes(context ->
                 displayBlackList(IntegerArgumentType.getInteger(context, "page"), context.getSource())));
+        // saplanting blackList add <item>
         blackList.then(CommandManager.literal("add")
             .then(CommandManager.argument("item", ItemStackArgumentType.itemStack())
                 .executes(context ->
                     addToBlackList(ItemStackArgumentType.getItemStackArgument(context, "item").getItem(),
                         context.getSource()))));
+        // saplanting blackList remove <item>
         blackList.then(CommandManager.literal("remove")
             .then(CommandManager.argument("item", ItemStackArgumentType.itemStack())
                 .executes(context ->
                     removeFromBlackList(ItemStackArgumentType.getItemStackArgument(context, "item").getItem(),
                         context.getSource()))));
+        // saplanting blackList clear
         blackList.then(CommandManager.literal("clear")
             .executes(context -> clearBlackList(context.getSource())));
         root.then(blackList);
@@ -103,7 +112,7 @@ public class Command {
 
     private static int setProperty(String key, int value, ServerCommandSource source) {
         if (CONFIG.set(key, value)) {
-            LiteralText text = new LiteralText(Translation.translate("command.saplanting.property.set.success")
+            MutableText text = new LiteralText(Translation.translate("command.saplanting.property.set.success")
                 .formatted(key, Integer.toString(value)));
             MutableText hover = new LiteralText(Translation.translate("config.saplanting.property.%s".formatted(key)));
             text.setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover)));
@@ -117,8 +126,8 @@ public class Command {
     }
 
     private static int getProperty(String key, ServerCommandSource source) {
-        LiteralText hover = new LiteralText(Translation.translate("config.saplanting.property.%s".formatted(key)));
-        LiteralText text = new LiteralText(Translation.translate("command.saplanting.property.get")
+        MutableText hover = new LiteralText(Translation.translate("config.saplanting.property.%s".formatted(key)));
+        MutableText text = new LiteralText(Translation.translate("command.saplanting.property.get")
             .formatted(key, CONFIG.getAsString(key)));
         text.setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover)));
         source.sendFeedback(text, false);
@@ -147,14 +156,14 @@ public class Command {
     }
 
     private static int load(ServerCommandSource source, boolean dedicated) {
-        LiteralText text;
-        LiteralText hover = new LiteralText(Translation.translate("command.saplanting.file.open"));
+        MutableText text;
+        MutableText hover = new LiteralText(Translation.translate("command.saplanting.file.open"));
         MutableText file = new LiteralText(CONFIG.stringConfigPath())
             .setStyle(CLICKABLE_FILE
                 .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, CONFIG.stringConfigPath()))
                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover)));
         MutableText query = new LiteralText(Translation.translate("command.saplanting.file.load.query"))
-            .setStyle(CLICKABLE_COMMAND.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/saplanting")));
+            .setStyle(CLICKABLE_COMMAND.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/saplanting")));
         if (CONFIG.load()) {
             text = new LiteralText(Translation.translate("command.saplanting.file.load.success"));
             if (!dedicated) {
@@ -198,10 +207,7 @@ public class Command {
     }
 
     private static int displayAll(int page, ServerCommandSource source) {
-        List<String> arr = CONFIG.getKeySet()
-            .stream()
-            .sorted()
-            .toList();
+        List<String> arr = CONFIG.getKeySet();
         if ((page - 1) * 8 > arr.size() || page < 1) {
             MutableText pageError = new LiteralText(Translation.translate("command.saplanting.page404"));
             source.sendError(pageError);
@@ -216,12 +222,20 @@ public class Command {
         for (int i = (page - 1) * 8; i < page * 8 && i < arr.size(); ++i) {
             String key = arr.get(i);
             LiteralText head = new LiteralText("- ");
+            MutableText reset = new LiteralText(Translation.translate("command.saplanting.reset"))
+                .setStyle(CLICKABLE_COMMAND
+                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                        "/saplanting property %s default".formatted(key)))
+                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                        new LiteralText(Translation.translate("command.saplanting.reset.hover")
+                            .formatted(DEFAULT_CONFIG.getAsString(key))))));
             LiteralText hover = new LiteralText(Translation.translate("config.saplanting.property.%s".formatted(key)));
             MutableText property = new LiteralText(key).setStyle(CLICKABLE_COMMAND
                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover))
-                .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/saplanting property %s".formatted(key))));
+                .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
+                    "/saplanting property %s ".formatted(key))));
             LiteralText value = new LiteralText(": " + CONFIG.getAsString(key));
-            head.append(property).append(value);
+            head.append(reset).append(" ").append(property).append(value);
 
             source.sendFeedback(head, false);
         }
@@ -261,7 +275,11 @@ public class Command {
         if (CONFIG.addToBlackList(item)) {
             MutableText text = new LiteralText(Translation.translate("command.saplanting.blackList.add.success")
                 .formatted(id));
-            source.sendFeedback(text, false);
+            MutableText undo = new LiteralText(Translation.translate("command.saplanting.blackList.add.undo"))
+                .setStyle(CLICKABLE_COMMAND
+                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                        "/saplanting blackList remove %s".formatted(id))));
+            source.sendFeedback(text.append(" ").append(undo), false);
             return 1;
         }
 
@@ -276,7 +294,11 @@ public class Command {
         if (CONFIG.removeFromBlackList(item)) {
             MutableText text = new LiteralText(Translation.translate("command.saplanting.blackList.remove.success")
                 .formatted(id));
-            source.sendFeedback(text, false);
+            MutableText undo = new LiteralText(Translation.translate("command.saplanting.blackList.remove.undo"))
+                .setStyle(CLICKABLE_COMMAND
+                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                        "/saplanting blackList add %s".formatted(id))));
+            source.sendFeedback(text.append(" ").append(undo), false);
             return 1;
         }
 
@@ -303,16 +325,16 @@ public class Command {
         /* TITLE: */
         MutableText title = new LiteralText(Translation.translate("command.saplanting.blackList.title"));
         source.sendFeedback(title, false);
-        MutableText hover = new LiteralText(Translation.translate("command.saplanting.blackList.hover"));
 
         /* - ITEM */
         for (int i = (page - 1) * 8; (i < (page * 8)) && (i < blackList.size()); ++i) {
             String id = blackList.get(i).getAsString();
             MutableText head = new LiteralText("- ");
+            MutableText remove = new LiteralText(Translation.translate("command.saplanting.blackList.click.remove"));
+            remove.setStyle(CLICKABLE_COMMAND
+                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                    "/saplanting blackList remove %s".formatted(id))));
             MutableText item = new LiteralText(id);
-            item.setStyle(CLICKABLE_COMMAND
-                .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/saplanting blackList remove %s".formatted(id)))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover)));
             head.append(item);
             source.sendFeedback(head, false);
         }

@@ -14,9 +14,11 @@ import java.lang.constant.Constable;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class Config {
     private static final Logger LOGGER = Saplanting.getLogger();
@@ -24,6 +26,7 @@ public class Config {
 
     private final JsonObject properties;
     private final HashSet<String> langs;
+    private final ArrayList<String> keySet;
 
     /**
      * Return a default set of Config.
@@ -52,19 +55,18 @@ public class Config {
         this.properties.addProperty("language", "en_us");
         this.properties.add("blackList", new JsonArray());
 
-        this.load();
-        this.save();
-    }
-
-    /**
-     * Return copy, feel free to modify return value.
-     * blackList and language is not included.
-     * */
-    public Set<String> getKeySet() {
-        HashSet<String> set = new HashSet<>(this.properties.keySet());
+        Set<String> set = new HashSet<>(this.properties.keySet());
         set.remove("blackList");
         set.remove("language");
-        return set;
+        this.keySet = set.stream().sorted().collect(Collectors.toCollection(ArrayList::new));
+    }
+
+
+    /**
+     * Not a copy! Please do not modify return value!
+     * */
+    public ArrayList<String> getKeySet() {
+        return this.keySet;
     }
 
     /**

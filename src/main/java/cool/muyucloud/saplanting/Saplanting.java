@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 public class Saplanting implements ModInitializer {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Config CONFIG = new Config();
+    private static final Config DEFAULT_CONFIG = new Config();
 
     // This should be in ItemEntityMixin, but was announced here to provide access for onServerStopping
     public static boolean THREAD_ALIVE = false;
@@ -26,15 +27,18 @@ public class Saplanting implements ModInitializer {
         LOGGER.info("Initializing.");
         LOGGER.info("Saplanting waking up! OwO");
 
-        LOGGER.info("Updating language.");
-        Translation.updateLanguage(CONFIG.getAsString("language"));
-
         LOGGER.info("Registering events.");
         ServerLifecycleEvents.SERVER_STARTING.register(this::onServerStarting);
         ServerLifecycleEvents.SERVER_STOPPING.register(this::onServerStopping);
 
         LOGGER.info("Registering commands.");
         CommandRegistrationCallback.EVENT.register(Command::register);
+
+        LOGGER.info("Loading config.");
+        CONFIG.load();
+
+        LOGGER.info("Updating language.");
+        Translation.updateLanguage(CONFIG.getAsString("language"));
     }
 
     private void onServerStopping(MinecraftServer server) {
@@ -59,6 +63,10 @@ public class Saplanting implements ModInitializer {
 
     public static Config getConfig() {
         return CONFIG;
+    }
+
+    public static Config getDefaultConfig() {
+        return DEFAULT_CONFIG;
     }
 
     public static boolean isPlantItem(Item item) {
