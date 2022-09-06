@@ -70,7 +70,7 @@ public abstract class ItemEntityMixin extends Entity {
             THREAD.start();
         }
 
-        /**/
+        /* Add item entity as tasks for multi thread run */
         TASKS.add(this);
     }
 
