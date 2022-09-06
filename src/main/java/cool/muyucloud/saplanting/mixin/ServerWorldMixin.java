@@ -23,8 +23,8 @@ public class ServerWorldMixin {
     private static final MutableText MSG = Text.literal(Translation.translate("saplanting.onPlayerConnected.plantDisable"))
         .append(Text.literal(Translation.translate("saplanting.onPlayerConnected.plantDisable.click"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/saplanting property plantEnable true"))
-                .withColor(TextColor.parse("aqua"))
+                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/saplanting property plantEnable true"))
+                .withColor(TextColor.parse("green"))
                 .withUnderline(true)));
 
     @Inject(method = "onPlayerConnected", at = @At("TAIL"))
