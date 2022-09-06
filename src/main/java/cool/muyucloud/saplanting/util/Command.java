@@ -53,12 +53,17 @@ public class Command {
         root.then(property);
 
         /* /saplanting language <OPERATION> [ARG] */
+        // /saplanting language
         LiteralArgumentBuilder<ServerCommandSource> language = CommandManager.literal("language");
         language.executes(context -> queryLanguage(context.getSource()));
+        // /saplanting language switch <LANG>
         LiteralArgumentBuilder<ServerCommandSource> change = CommandManager.literal("switch");
         for (String name : CONFIG.getValidLangs()) {
             change.then(CommandManager.literal(name).executes(context -> updateLanguage(name, context.getSource())));
         }
+        // /saplanting language switch default
+        change.then(CommandManager.literal("default")
+            .executes(context -> updateLanguage("en_us", context.getSource())));
         language.then(change);
         root.then(language);
 
