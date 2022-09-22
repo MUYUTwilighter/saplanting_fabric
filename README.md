@@ -48,7 +48,7 @@ Only for sapling blocks that can be planted in shape of 2x2.
 
 ## Commands
 
-All the commands require admin-permission to execute, feedback only supports Simplified Chinese by default.  
+All the commands require admin-permission to execute.  
 All the changes made by commands will not be saved to config file immediately. If you want to save them manually, use commands below.
 
 ### Functional Properties

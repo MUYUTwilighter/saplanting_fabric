@@ -24,8 +24,7 @@ public class Translation {
         } catch (Exception e) {
             throw new NullPointerException("Can not read default language file!");
         }
-        this.map = (new Gson()).fromJson(json, new TypeToken<HashMap<String, String>>() {
-        }.getType());
+        this.map = (new Gson()).fromJson(json, new TypeToken<HashMap<String, String>>() {}.getType());
     }
 
     public static String translate(String key) {
