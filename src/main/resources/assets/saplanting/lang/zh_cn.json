@@ -14,9 +14,11 @@
     "config.saplanting.property.allowOther": "允许种植其他植物",
     "config.saplanting.property.showTitleOnOpConnected": "当管理员加入游戏时提醒落苗生根已关闭",
     "config.saplanting.property.ignoreShape": "不论是否可生长，任然种植1x1的树苗",
+    "config.saplanting.property.warnTaskQueue": "掉落物太多时警告",
     "config.saplanting.property.plantDelay": "执行种植前的游戏刻数量",
     "config.saplanting.property.avoidDense": "检查树苗周围是否有木头、树叶和树苗的范围",
     "config.saplanting.property.playerAround": "检查树苗周围是否有玩家的范围",
+    "config.saplanting.property.maxTask": "多线程处理的最大队列任务数量",
     "config.saplanting.property.language": "当前语言",
 
     "command.saplanting.property.set.success": "%s 被成功设置为 %s.",

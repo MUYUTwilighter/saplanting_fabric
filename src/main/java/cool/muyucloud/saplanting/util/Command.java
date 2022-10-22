@@ -258,7 +258,7 @@ public class Command {
             foot = Text.literal(" 1 ");
         } else if (page == 1) {
             foot = Text.literal(" 1 >> ").append(next);
-        } else if ((page * 8) > arr.size()) {
+        } else if ((page * 8) >= arr.size()) {
             foot = Text.literal(" ").append(former).append(" << %d ".formatted(page));
         } else {
             foot = Text.literal(" ").append(former).append(" << %d >> ".formatted(page)).append(next);

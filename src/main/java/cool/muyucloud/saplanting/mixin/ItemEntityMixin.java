@@ -7,6 +7,7 @@ import net.minecraft.block.sapling.LargeTreeSaplingGenerator;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
+import net.minecraft.item.AirBlockItem;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -31,7 +32,9 @@ public abstract class ItemEntityMixin extends Entity {
     private static final Config CONFIG = Saplanting.getConfig();
     private static final Logger LOGGER = Saplanting.getLogger();
 
-    private static final LinkedList<ItemEntityMixin> TASKS = new LinkedList<>();
+    private static final LinkedList<ItemEntityMixin> TASKS_1 = new LinkedList<>();
+    private static final LinkedList<ItemEntityMixin> TASKS_2 = new LinkedList<>();
+    private static boolean SWITCH = true;
 
     int plantAge = 0;
 
@@ -71,7 +74,7 @@ public abstract class ItemEntityMixin extends Entity {
         }
 
         /* Add item entity as tasks for multi thread run */
-        TASKS.add(this);
+        this.addToQueue();
     }
 
     /**
@@ -224,21 +227,58 @@ public abstract class ItemEntityMixin extends Entity {
      * */
     private static void multiThreadRun() {
         try {
-            while (Saplanting.THREAD_ALIVE && CONFIG.getAsBoolean("plantEnable")) {
-                if (TASKS.isEmpty()) {
-                    Thread.sleep(50);
-                    continue;
+            while (Saplanting.THREAD_ALIVE && CONFIG.getAsBoolean("plantEnable") && CONFIG.getAsBoolean("multiThread")) {
+                LinkedList<ItemEntityMixin> TASKS;
+                if (SWITCH) {
+                    TASKS = TASKS_2;
+                } else {
+                    TASKS = TASKS_1;
                 }
 
-                while (!TASKS.isEmpty() && CONFIG.getAsBoolean("plantEnable")) {
-                    TASKS.removeFirst().run();
+                while (!TASKS.isEmpty() && CONFIG.getAsBoolean("plantEnable") && Saplanting.THREAD_ALIVE && CONFIG.getAsBoolean("multiThread")) {
+                    ItemEntityMixin task = TASKS.removeFirst();
+                    Item item = task.getStack().getItem();
+                    if (item instanceof AirBlockItem) { // In case item was removed mill-secs ago
+                        continue;
+                    }
+                    task.run();
                 }
+
+                SWITCH = !SWITCH;
+
+                Thread.sleep(20);
             }
             LOGGER.info("Saplanting core thread exiting.");
         } catch (Exception e) {
             LOGGER.info("Saplanting core thread exited unexpectedly!");
             e.printStackTrace();
         }
+        TASKS_1.clear();
+        TASKS_2.clear();
         Saplanting.THREAD_ALIVE = false;
+    }
+
+    /**
+     * To visit task queue shared by saplanting-core-thread and MC server thread safely,
+     * use this method to add items as tasks.
+     * This should only be used by MC server thread.
+     * */
+    private void addToQueue() {
+        LinkedList<ItemEntityMixin> queue;
+        if (SWITCH) {
+            queue = TASKS_1;
+        } else {
+            queue = TASKS_2;
+        }
+
+        int size = queue.size();
+        if (size > CONFIG.getAsInt("maxTask")) {
+            queue.clear();
+            if (CONFIG.getAsBoolean("warnTaskQueue")) {
+                LOGGER.warn(String.format("Too many items! Cleared %s tasks.", size));
+            }
+        }
+
+        queue.add(this);
     }
 }
