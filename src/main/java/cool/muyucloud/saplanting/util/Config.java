@@ -49,9 +49,11 @@ public class Config {
         this.properties.addProperty("allowOther", false);
         this.properties.addProperty("showTitleOnOpConnected", false);
         this.properties.addProperty("ignoreShape", false);
+        this.properties.addProperty("warnTaskQueue", true);
         this.properties.addProperty("plantDelay", 40);
         this.properties.addProperty("avoidDense", 2);
         this.properties.addProperty("playerAround", 2);
+        this.properties.addProperty("maxTask", 1000);
         this.properties.addProperty("language", "en_us");
         this.properties.add("blackList", new JsonArray());
 
