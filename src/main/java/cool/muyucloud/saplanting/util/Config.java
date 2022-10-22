@@ -16,7 +16,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Config {
     private static final Logger LOGGER = Saplanting.getLogger();
@@ -47,9 +46,11 @@ public class Config {
         this.properties.addProperty("allowOther", false);
         this.properties.addProperty("showTitleOnOpConnected", false);
         this.properties.addProperty("ignoreShape", false);
+        this.properties.addProperty("warnTaskQueue", true);
         this.properties.addProperty("plantDelay", 40);
         this.properties.addProperty("avoidDense", 2);
         this.properties.addProperty("playerAround", 2);
+        this.properties.addProperty("maxTask", 1000);
         this.properties.addProperty("language", "en_us");
         this.properties.add("blackList", new JsonArray());
 
@@ -59,7 +60,7 @@ public class Config {
         }
         set.remove("blackList");
         set.remove("language");
-        this.keySet = set.stream().sorted().collect(Collectors.toCollection(ArrayList::new));
+        this.keySet = new ArrayList<>(set);
     }
 
     /**

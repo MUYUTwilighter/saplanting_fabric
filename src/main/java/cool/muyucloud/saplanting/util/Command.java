@@ -356,7 +356,7 @@ public class Command {
             foot = new LiteralText(" 1 ");
         } else if (page == 1) {
             foot = new LiteralText(" 1 >> ").append(next);
-        } else if ((page * 8) > blackList.size()) {
+        } else if ((page * 8) >= blackList.size()) {
             foot = new LiteralText(" ").append(former).append(String.format(" << %d ", page));
         } else {
             foot = new LiteralText(" ").append(former).append(String.format(" << %d >> ", page)).append(next);
