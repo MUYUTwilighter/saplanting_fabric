@@ -13,7 +13,9 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
@@ -36,7 +38,9 @@ public abstract class ItemEntityMixin extends Entity {
     private static final LinkedList<ItemEntityMixin> TASKS_2 = new LinkedList<>();
     private static boolean SWITCH = true;
 
-    int plantAge = 0;
+    private int plantAge = 0;
+    // if
+    private boolean containsError = false;
 
     public ItemEntityMixin(EntityType<?> type, World world) {
         super(type, world);
@@ -48,12 +52,12 @@ public abstract class ItemEntityMixin extends Entity {
      * 1. filter unwanted item.
      * 2. kill/awaken thread according to property "multiThread"
      * 3. dispatch item entity as tasks and deal with them
-     *  */
+     */
     @Inject(method = "tick", at = @At("TAIL"))
     public void tick(CallbackInfo ci) {
         Item item = this.getStack().getItem();
         /* Is wanted item */
-        if (this.world.isClient() || !Saplanting.isPlantItem(item) || !CONFIG.getAsBoolean("plantEnable")) {
+        if (this.world.isClient() || this.containsError || !Saplanting.isPlantItem(item) || !CONFIG.getAsBoolean("plantEnable")) {
             return;
         }
 
@@ -200,7 +204,7 @@ public abstract class ItemEntityMixin extends Entity {
      * 2. tickCheck() and reset plantAge
      * 3. plantAge check then roundCheck()
      * 4. plant();
-    * */
+     */
     public void run() {
         ++this.plantAge;
 
@@ -214,7 +218,14 @@ public abstract class ItemEntityMixin extends Entity {
         }
 
         if (this.roundCheck()) {
-            this.plant();
+            try {
+                this.plant();
+            } catch (Exception e) {
+                LOGGER.error("Some Errors occurred during planting items.");
+                LOGGER.error(String.format("While handling:\n%s", this.getDetail()));
+                e.printStackTrace();
+                this.containsError = true;
+            }
         }
         this.plantAge = 0;
     }
@@ -224,7 +235,7 @@ public abstract class ItemEntityMixin extends Entity {
      * Including:
      * 1. take item entity from tasks and throw it to ItemEntityMixin::run()
      * 2. auto stop and sleep
-     * */
+     */
     private static void multiThreadRun() {
         try {
             while (Saplanting.THREAD_ALIVE && CONFIG.getAsBoolean("plantEnable") && CONFIG.getAsBoolean("multiThread")) {
@@ -262,7 +273,7 @@ public abstract class ItemEntityMixin extends Entity {
      * To visit task queue shared by saplanting-core-thread and MC server thread safely,
      * use this method to add items as tasks.
      * This should only be used by MC server thread.
-     * */
+     */
     private void addToQueue() {
         LinkedList<ItemEntityMixin> queue;
         if (SWITCH) {
@@ -280,5 +291,20 @@ public abstract class ItemEntityMixin extends Entity {
         }
 
         queue.add(this);
+    }
+
+    private String getDetail() {
+        Vec3d pos = this.getPos();
+        String biomes = this.world.getBiome(this.getBlockPos()).toString();
+        String dim = this.world.getDimensionKey().getRegistry().toString();
+        BlockItem item = ((BlockItem) this.getStack().getItem());
+        Block block = item.getBlock();
+        String output = String.format("ItemEntity: \"%s\" at %s in world \"%s\", biomes \"%s\"\n",
+            this.getEntityName(), pos, dim, biomes);
+        output += String.format("BlockItem: \"%s\"(%s)\n",
+            item.getName(), Registry.ITEM.getId(item));
+        output += String.format("Block: \"%s\"(%s)",
+            block.getName(), block);
+        return output;
     }
 }
