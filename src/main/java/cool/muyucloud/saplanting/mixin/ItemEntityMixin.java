@@ -13,6 +13,8 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Random;
 
@@ -34,6 +37,7 @@ public abstract class ItemEntityMixin extends Entity {
 
     private static final LinkedList<ItemEntityMixin> TASKS_1 = new LinkedList<>();
     private static final LinkedList<ItemEntityMixin> TASKS_2 = new LinkedList<>();
+    private static final HashSet<Item> containError = new HashSet<>();
     private static boolean SWITCH = true;
 
     int plantAge = 0;
@@ -53,7 +57,7 @@ public abstract class ItemEntityMixin extends Entity {
     public void tick(CallbackInfo ci) {
         Item item = this.getStack().getItem();
         /* Is wanted item */
-        if (this.world.isClient() || !Saplanting.isPlantItem(item) || !CONFIG.getAsBoolean("plantEnable")) {
+        if (containError.contains(item) || this.world.isClient() || !Saplanting.isPlantItem(item) || !CONFIG.getAsBoolean("plantEnable")) {
             return;
         }
 
@@ -214,7 +218,17 @@ public abstract class ItemEntityMixin extends Entity {
         }
 
         if (this.roundCheck()) {
-            this.plant();
+            try {
+                this.plant();
+            } catch (Exception e) {
+                LOGGER.error("Some Errors occurred during planting this item:  ");
+                LOGGER.error(this.getDetail());
+                e.printStackTrace();
+                containError.add(this.getStack().getItem());
+                if (CONFIG.getAsBoolean("autoBlackList")) {
+                    CONFIG.addToBlackList(this.getStack().getItem());
+                }
+            }
         }
         this.plantAge = 0;
     }
@@ -280,5 +294,19 @@ public abstract class ItemEntityMixin extends Entity {
         }
 
         queue.add(this);
+    }
+
+    private String getDetail() {
+        Vec3d pos = this.getPos();
+        String biomes = this.world.getBiome(this.getBlockPos()).toString();
+        BlockItem item = ((BlockItem) this.getStack().getItem());
+        Block block = item.getBlock();
+        String output = String.format("ItemEntity: \"%s\" at %s, biomes \"%s\"\n",
+            this.getEntityName(), pos, biomes);
+        output += String.format("BlockItem: \"%s\"(%s)\n",
+            item.getName(), Registry.ITEM.getId(item));
+        output += String.format("Block: \"%s\"(%s)",
+            block.getName(), block);
+        return output;
     }
 }
