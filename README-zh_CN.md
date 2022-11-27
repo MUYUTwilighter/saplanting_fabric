@@ -37,6 +37,8 @@ output: pdf_document
  - allowOther：启用其他植物的自动种植，默认：false，期望：boolean
  - showTitleOnOpConnected: 在**管理员**加入服务器时，显示当前服务器是否启用Saplanting，默认：false，期望：boolean  
  - ignoreShape: 不论树苗是否能在1x1的形状下生长，依然种植，默认：false，期望：boolean
+ - warnTaskQueue: 如果物品处理队列过大，发出警报，默认：true，期望：boolean
+ - autoBlackList: 如果处理某物品时发生错误，自动将其加入黑名单，默认：true，期望：boolean
  - language: 使用的语言，默认："en_us"，期望：String
  - plantDelay：自动种植的延迟（单位tick），默认：40，期望：nonnegative integers
  - avoidDense：其他树的检测半径（如果有其他树则不种植），默认：2，expect nonnegative integers

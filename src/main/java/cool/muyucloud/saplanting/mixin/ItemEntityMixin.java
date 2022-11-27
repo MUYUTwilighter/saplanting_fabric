@@ -24,6 +24,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 
 @Mixin(ItemEntity.class)
@@ -36,11 +37,10 @@ public abstract class ItemEntityMixin extends Entity {
 
     private static final LinkedList<ItemEntityMixin> TASKS_1 = new LinkedList<>();
     private static final LinkedList<ItemEntityMixin> TASKS_2 = new LinkedList<>();
+    private static final HashSet<Item> containError = new HashSet<>();
     private static boolean SWITCH = true;
 
     private int plantAge = 0;
-    // if
-    private boolean containsError = false;
 
     public ItemEntityMixin(EntityType<?> type, World world) {
         super(type, world);
@@ -57,7 +57,7 @@ public abstract class ItemEntityMixin extends Entity {
     public void tick(CallbackInfo ci) {
         Item item = this.getStack().getItem();
         /* Is wanted item */
-        if (this.world.isClient() || this.containsError || !Saplanting.isPlantItem(item) || !CONFIG.getAsBoolean("plantEnable")) {
+        if (containError.contains(item) || this.world.isClient() || !Saplanting.isPlantItem(item) || !CONFIG.getAsBoolean("plantEnable")) {
             return;
         }
 
@@ -221,10 +221,13 @@ public abstract class ItemEntityMixin extends Entity {
             try {
                 this.plant();
             } catch (Exception e) {
-                LOGGER.error("Some Errors occurred during planting items.");
-                LOGGER.error(String.format("While handling:\n%s", this.getDetail()));
+                LOGGER.error("Some Errors occurred during planting this item:  ");
+                LOGGER.error(this.getDetail());
                 e.printStackTrace();
-                this.containsError = true;
+                containError.add(this.getStack().getItem());
+                if (CONFIG.getAsBoolean("autoBlackList")) {
+                    CONFIG.addToBlackList(this.getStack().getItem());
+                }
             }
         }
         this.plantAge = 0;

@@ -46,6 +46,7 @@ public class Config {
         this.properties.addProperty("showTitleOnOpConnected", false);
         this.properties.addProperty("ignoreShape", false);
         this.properties.addProperty("warnTaskQueue", true);
+        this.properties.addProperty("autoBlackList", true);
         this.properties.addProperty("plantDelay", 40);
         this.properties.addProperty("avoidDense", 2);
         this.properties.addProperty("playerAround", 2);

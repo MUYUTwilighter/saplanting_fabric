@@ -40,6 +40,8 @@ Only for sapling blocks that can be planted in shape of 2x2.
  - allowOther: Enable auto-planting for other plants, default: false, expect: boolean
  - showTitleOnOpConnected: Show disability for Saplanting on a server when an **operator** connected to this server, default: false, expect: boolean  
  - ignoreShape: Plant no matter the sapling can grow in shape of 1x1, default: false, expect: boolean
+ - warnTaskQueue: Show warning if task queue was too large, default: true, expect: boolean  
+ - autoBlackList: If errors occurred during handling a specific item, add this item to black list, default: true, expect boolean
  - language: Current language of Saplanting, default: "en_us", expect: String
  - plantDelay: How many ticks before the sapling drop will be planted, default: 40, expect: nonnegative integers
  - avoidDense: The radius of area that will not plant when selected area already got other trees, default: 2, expect nonnegative integers
