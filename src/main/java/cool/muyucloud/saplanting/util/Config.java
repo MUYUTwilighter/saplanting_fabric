@@ -11,12 +11,10 @@ import org.apache.logging.log4j.Logger;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.constant.Constable;
-import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Config {
     private static final Logger LOGGER = Saplanting.getLogger();
@@ -48,6 +46,7 @@ public class Config {
         this.properties.addProperty("showTitleOnOpConnected", false);
         this.properties.addProperty("ignoreShape", false);
         this.properties.addProperty("warnTaskQueue", true);
+        this.properties.addProperty("autoBlackList", true);
         this.properties.addProperty("plantDelay", 40);
         this.properties.addProperty("avoidDense", 2);
         this.properties.addProperty("playerAround", 2);
