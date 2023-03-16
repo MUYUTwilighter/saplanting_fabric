@@ -9,10 +9,10 @@ import cool.muyucloud.saplanting.Saplanting;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.ItemStackArgumentType;
 import net.minecraft.item.Item;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.*;
-import net.minecraft.util.registry.Registry;
 
 import java.util.List;
 
@@ -269,7 +269,7 @@ public class Command {
     }
 
     private static int addToBlackList(Item item, ServerCommandSource source) {
-        String id = Registry.ITEM.getId(item).toString();
+        String id = Registries.ITEM.getId(item).toString();
 
         if (!Saplanting.isPlantItem(item)) {
             MutableText text = Text.literal(Translation.translate("command.saplanting.blackList.add.notPlant")
@@ -296,7 +296,7 @@ public class Command {
     }
 
     private static int removeFromBlackList(Item item, ServerCommandSource source) {
-        String id = Registry.ITEM.getId(item).toString();
+        String id = Registries.ITEM.getId(item).toString();
         if (CONFIG.removeFromBlackList(item)) {
             MutableText text = Text.literal(Translation.translate("command.saplanting.blackList.remove.success")
                 .formatted(id));

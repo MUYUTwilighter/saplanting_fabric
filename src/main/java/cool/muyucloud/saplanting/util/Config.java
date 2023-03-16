@@ -5,7 +5,7 @@ import cool.muyucloud.saplanting.Saplanting;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.item.Item;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.registry.Registries;
 import org.apache.logging.log4j.Logger;
 
 import java.io.InputStream;
@@ -127,8 +127,8 @@ public class Config {
                 for (int i = 0; i < array.size(); ++i) {
                     JsonElement jsonElement = array.get(i);
                     Identifier id = new Identifier(jsonElement.getAsString());
-                    Item item = Registry.ITEM.get(id);
-                    if (Registry.ITEM.containsId(id) && !blackList.contains(jsonElement) && Saplanting.isPlantItem(item)) {
+                    Item item = Registries.ITEM.get(id);
+                    if (Registries.ITEM.containsId(id) && !blackList.contains(jsonElement) && Saplanting.isPlantItem(item)) {
                         blackList.add(jsonElement);
                     }
                 }
@@ -272,7 +272,7 @@ public class Config {
      * Not check Saplanting.isPlantItem().
      * */
     public boolean addToBlackList(Item item) {
-        String id = Registry.ITEM.getId(item).toString();
+        String id = Registries.ITEM.getId(item).toString();
         JsonElement jsonElement = new JsonPrimitive(id);
         JsonArray blackList = this.properties.getAsJsonArray("blackList");
 
@@ -289,7 +289,7 @@ public class Config {
      * Check in black list.
      * */
     public boolean removeFromBlackList(Item item) {
-        JsonElement jsonElement = new JsonPrimitive(Registry.ITEM.getId(item).toString());
+        JsonElement jsonElement = new JsonPrimitive(Registries.ITEM.getId(item).toString());
         JsonArray blackList = this.properties.getAsJsonArray("blackList");
 
         if (!blackList.contains(jsonElement)) {
@@ -304,7 +304,7 @@ public class Config {
      * Not check Saplanting.isPlantItem().
      * */
     public boolean inBlackList(Item item) {
-        JsonElement jsonElement = new JsonPrimitive(Registry.ITEM.getId(item).toString());
+        JsonElement jsonElement = new JsonPrimitive(Registries.ITEM.getId(item).toString());
         return this.properties.getAsJsonArray("blackList").contains(jsonElement);
     }
 

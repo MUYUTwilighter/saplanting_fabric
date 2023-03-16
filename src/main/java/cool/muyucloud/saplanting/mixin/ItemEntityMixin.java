@@ -11,11 +11,11 @@ import net.minecraft.item.AirBlockItem;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.tag.BlockTags;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
@@ -305,7 +305,7 @@ public abstract class ItemEntityMixin extends Entity {
         String output = String.format("ItemEntity: \"%s\" at %s in world \"%s\", biomes \"%s\"\n",
             this.getEntityName(), pos, dim, biomes);
         output += String.format("BlockItem: \"%s\"(%s)\n",
-            item.getName(), Registry.ITEM.getId(item));
+            item.getName(), Registries.ITEM.getId(item));
         output += String.format("Block: \"%s\"(%s)",
             block.getName(), block);
         return output;

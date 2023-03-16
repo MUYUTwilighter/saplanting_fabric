@@ -34,7 +34,7 @@ public class Translation {
         return key;
     }
 
-    public static boolean updateLanguage(String name) {
+    public static void updateLanguage(String name) {
         String json;
         try {
             json = IOUtils.toString(
@@ -43,10 +43,9 @@ public class Translation {
                         .getResourceAsStream("assets/saplanting/lang/%s.json".formatted(name))),
                 StandardCharsets.UTF_8);
         } catch (Exception e) {
-            return false;
+            return;
         }
         TRANSLATION.map = (new Gson()).fromJson(json, new TypeToken<HashMap<String, String>>() {
         }.getType());
-        return true;
     }
 }
