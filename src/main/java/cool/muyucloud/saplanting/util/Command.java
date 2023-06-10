@@ -15,6 +15,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.*;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 public class Command {
     private static final Config CONFIG = Saplanting.getConfig();
@@ -107,7 +108,7 @@ public class Command {
                 .formatted(key, Boolean.toString(value)));
             MutableText hover = Text.literal(Translation.translate("config.saplanting.property.%s".formatted(key)));
             text.setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover)));
-            source.sendFeedback(text, false);
+            sendFeedback(source, text, false);
         } else {
             MutableText text = Text.literal(Translation.translate("command.saplanting.property.set.already")
                 .formatted(key, Boolean.toString(value)));
@@ -122,7 +123,7 @@ public class Command {
                 .formatted(key, Integer.toString(value)));
             MutableText hover = Text.literal(Translation.translate("config.saplanting.property.%s".formatted(key)));
             text.setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover)));
-            source.sendFeedback(text, false);
+            sendFeedback(source, text, false);
         } else {
             MutableText text = Text.literal(Translation.translate("command.saplanting.property.set.already")
                 .formatted(key, Integer.toString(value)));
@@ -136,7 +137,7 @@ public class Command {
         MutableText text = Text.literal(Translation.translate("command.saplanting.property.get")
             .formatted(key, CONFIG.getAsString(key)));
         text.setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover)));
-        source.sendFeedback(text, false);
+        sendFeedback(source, text, false);
         return 1;
     }
 
@@ -148,7 +149,7 @@ public class Command {
         }
         Translation.updateLanguage(name);
         MutableText text = Text.literal(Translation.translate("command.saplanting.language.success").formatted(name));
-        source.sendFeedback(text, false);
+        sendFeedback(source, text, false);
         return 1;
     }
 
@@ -157,7 +158,7 @@ public class Command {
         MutableText change = Text.literal(Translation.translate("command.saplanting.language.switch"))
             .setStyle(CLICKABLE_COMMAND
                 .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/saplanting language switch ")));
-        source.sendFeedback(text.append(change), false);
+        sendFeedback(source, text.append(change), false);
         return 1;
     }
 
@@ -176,7 +177,7 @@ public class Command {
                 text.append(file);
             }
             text.append(" ").append(query);
-            source.sendFeedback(text, false);
+            sendFeedback(source, text, false);
             return 1;
         } else {
             text = Text.literal(Translation.translate("command.saplanting.file.load.fail"));
@@ -200,7 +201,7 @@ public class Command {
             if (!dedicated) {
                 text.append(file);
             }
-            source.sendFeedback(text, false);
+            sendFeedback(source, text, false);
             return 1;
         } else {
             text = Text.literal(Translation.translate("command.saplanting.file.save.fail"));
@@ -223,7 +224,7 @@ public class Command {
         /* ======TITLE====== */
         MutableText title = Text.literal(Translation.translate("command.saplanting.title")).setStyle(Style.EMPTY
             .withColor(TextColor.parse("gold")));
-        source.sendFeedback(title, false);
+        sendFeedback(source, title, false);
         /* - <RESET> KEY : VALUE */
         for (int i = (page - 1) * 8; i < page * 8 && i < arr.size(); ++i) {
             String key = arr.get(i);
@@ -243,7 +244,7 @@ public class Command {
             MutableText value = Text.literal(": " + CONFIG.getAsString(key));
             head.append(reset).append(" ").append(property).append(value);
 
-            source.sendFeedback(head, false);
+            sendFeedback(source, head, false);
         }
 
         /* [FORMER] PAGE [NEXT] */
@@ -263,7 +264,7 @@ public class Command {
         } else {
             foot = Text.literal(" ").append(former).append(" << %d >> ".formatted(page)).append(next);
         }
-        source.sendFeedback(foot, false);
+        sendFeedback(source, foot, false);
 
         return page;
     }
@@ -285,7 +286,7 @@ public class Command {
                 .setStyle(CLICKABLE_COMMAND
                     .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
                         "/saplanting blackList remove %s".formatted(id))));
-            source.sendFeedback(text.append(" ").append(undo), false);
+            sendFeedback(source, text.append(" ").append(undo), false);
             return 1;
         }
 
@@ -304,7 +305,7 @@ public class Command {
                 .setStyle(CLICKABLE_COMMAND
                     .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
                         "/saplanting blackList add %s".formatted(id))));
-            source.sendFeedback(text.append(" ").append(undo), false);
+            sendFeedback(source, text.append(" ").append(undo), false);
             return 1;
         }
 
@@ -330,7 +331,7 @@ public class Command {
 
         /* TITLE: */
         MutableText title = Text.literal(Translation.translate("command.saplanting.blackList.title"));
-        source.sendFeedback(title, false);
+        sendFeedback(source, title, false);
 
         /* - ITEM */
         for (int i = (page - 1) * 8; (i < (page * 8)) && (i < blackList.size()); ++i) {
@@ -341,7 +342,7 @@ public class Command {
                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
                     "/saplanting blackList remove %s".formatted(id))));
             MutableText item = Text.literal(id);
-            source.sendFeedback(head.append(remove).append(" ").append(item), false);
+            sendFeedback(source, head.append(remove).append(" ").append(item), false);
         }
 
         /* [FORMER] << PAGE >> [NEXT] */
@@ -361,7 +362,7 @@ public class Command {
         } else {
             foot = Text.literal(" ").append(former).append(" << %d >> ".formatted(page)).append(next);
         }
-        source.sendFeedback(foot, false);
+        sendFeedback(source, foot, false);
         return CONFIG.blackListSize();
     }
 
@@ -372,8 +373,12 @@ public class Command {
         }
         int i = CONFIG.blackListSize();
         MutableText text = Text.literal(Translation.translate("command.saplanting.blackList.clear"));
-        source.sendFeedback(text, false);
+        sendFeedback(source, text, false);
         CONFIG.clearBlackList();
         return i;
+    }
+
+    private static void sendFeedback(ServerCommandSource source, Text text, boolean broadcastToOps) {
+        source.sendFeedback(() -> text, broadcastToOps);
     }
 }

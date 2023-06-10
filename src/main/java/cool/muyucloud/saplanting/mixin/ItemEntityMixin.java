@@ -57,7 +57,7 @@ public abstract class ItemEntityMixin extends Entity {
     public void tick(CallbackInfo ci) {
         Item item = this.getStack().getItem();
         /* Is wanted item */
-        if (containError.contains(item) || this.world.isClient() || !Saplanting.isPlantItem(item) || !CONFIG.getAsBoolean("plantEnable")) {
+        if (containError.contains(item) || this.getWorld().isClient() || !Saplanting.isPlantItem(item) || !CONFIG.getAsBoolean("plantEnable")) {
             return;
         }
 
@@ -93,7 +93,7 @@ public abstract class ItemEntityMixin extends Entity {
      */
     private boolean tickCheck() {
         BlockItem item = ((BlockItem) this.getStack().getItem());
-        if (!this.onGround || !CONFIG.getAsBoolean("plantEnable") || !Saplanting.isPlantAllowed(item)) {
+        if (!this.isOnGround() || !CONFIG.getAsBoolean("plantEnable") || !Saplanting.isPlantAllowed(item)) {
             return false;
         }
 
@@ -107,7 +107,7 @@ public abstract class ItemEntityMixin extends Entity {
             return false;
         }
 
-        return state.canPlaceAt(world, pos) && world.getBlockState(pos).getMaterial().isReplaceable();
+        return state.canPlaceAt(getWorld(), pos) && getWorld().getBlockState(pos).isReplaceable();
     }
 
     /**
@@ -126,7 +126,7 @@ public abstract class ItemEntityMixin extends Entity {
 
         /* Player Nearby Check */
         int playerAround = CONFIG.getAsInt("playerAround");
-        if (playerAround > 0 && world.isPlayerInRange(getX(), getY(), getZ(), playerAround)) {
+        if (playerAround > 0 && getWorld().isPlayerInRange(getX(), getY(), getZ(), playerAround)) {
             return false;
         }
 
@@ -137,7 +137,7 @@ public abstract class ItemEntityMixin extends Entity {
                 for (BlockPos tmpPos : BlockPos.iterate(
                     pos.add(avoidDense, avoidDense, avoidDense),
                     pos.add(-avoidDense, -avoidDense, -avoidDense))) {
-                    Block tmpBlock = world.getBlockState(tmpPos).getBlock();
+                    Block tmpBlock = getWorld().getBlockState(tmpPos).getBlock();
                     BlockState state = tmpBlock.getDefaultState();
                     if (tmpBlock instanceof LeavesBlock
                         || tmpBlock instanceof SaplingBlock
@@ -166,15 +166,16 @@ public abstract class ItemEntityMixin extends Entity {
             pos = pos.up();
         }
 
+        World world = getWorld();
         if (block instanceof SaplingBlock) {
             SaplingGeneratorAccessor generator = ((SaplingGeneratorAccessor) ((SaplingBlockAccessor) block).getGenerator());
             /* Plant Large Tree */
             if (CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && generator instanceof LargeTreeSaplingGenerator) {
                 for (BlockPos tmpPos : BlockPos.iterate(pos, pos.add(-1, 0, -1))) {
-                    if (block.canPlaceAt(state, world, tmpPos) && world.getBlockState(tmpPos).getMaterial().isReplaceable()
-                        && block.canPlaceAt(state, world, tmpPos.add(1, 0, 0)) && world.getBlockState(tmpPos.add(1, 0, 0)).getMaterial().isReplaceable()
-                        && block.canPlaceAt(state, world, tmpPos.add(1, 0, 1)) && world.getBlockState(tmpPos.add(1, 0, 1)).getMaterial().isReplaceable()
-                        && block.canPlaceAt(state, world, tmpPos.add(0, 0, 1)) && world.getBlockState(tmpPos.add(0, 0, 1)).getMaterial().isReplaceable()) {
+                    if (block.canPlaceAt(state, world, tmpPos) && world.getBlockState(tmpPos).isReplaceable()
+                        && block.canPlaceAt(state, world, tmpPos.add(1, 0, 0)) && world.getBlockState(tmpPos.add(1, 0, 0)).isReplaceable()
+                        && block.canPlaceAt(state, world, tmpPos.add(1, 0, 1)) && world.getBlockState(tmpPos.add(1, 0, 1)).isReplaceable()
+                        && block.canPlaceAt(state, world, tmpPos.add(0, 0, 1)) && world.getBlockState(tmpPos.add(0, 0, 1)).isReplaceable()) {
                         world.setBlockState(tmpPos, state, Block.NOTIFY_ALL);
                         world.setBlockState(tmpPos.add(1, 0, 0), state, Block.NOTIFY_ALL);
                         world.setBlockState(tmpPos.add(0, 0, 1), state, Block.NOTIFY_ALL);
@@ -298,8 +299,9 @@ public abstract class ItemEntityMixin extends Entity {
 
     private String getDetail() {
         Vec3d pos = this.getPos();
-        String biomes = this.world.getBiome(this.getBlockPos()).toString();
-        String dim = this.world.getDimensionKey().getRegistry().toString();
+        World world = this.getWorld();
+        String biomes = world.getBiome(this.getBlockPos()).toString();
+        String dim = world.getDimensionKey().getRegistry().toString();
         BlockItem item = ((BlockItem) this.getStack().getItem());
         Block block = item.getBlock();
         String output = String.format("ItemEntity: \"%s\" at %s in world \"%s\", biomes \"%s\"\n",
