@@ -15,7 +15,6 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.*;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 public class Command {
     private static final Config CONFIG = Saplanting.getConfig();

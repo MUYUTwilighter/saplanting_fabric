@@ -10,6 +10,7 @@ import net.minecraft.text.*;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -19,7 +20,9 @@ public class ServerWorldMixin {
     @Shadow
     @Final
     private MinecraftServer server;
+    @Unique
     private static final Config CONFIG = Saplanting.getConfig();
+    @Unique
     private static final MutableText MSG = Text.literal(Translation.translate("saplanting.onPlayerConnected.plantDisable"))
         .append(Text.literal(Translation.translate("saplanting.onPlayerConnected.plantDisable.click"))
             .setStyle(Style.EMPTY
