@@ -2,6 +2,7 @@ package cool.muyucloud.saplanting.mixin;
 
 import cool.muyucloud.saplanting.util.Config;
 import cool.muyucloud.saplanting.Saplanting;
+import cool.muyucloud.saplanting.util.PlantContext;
 import net.minecraft.block.*;
 import net.minecraft.block.sapling.LargeTreeSaplingGenerator;
 import net.minecraft.entity.Entity;
@@ -19,13 +20,17 @@ import net.minecraft.world.World;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.time.LocalTime;
+import java.time.temporal.ChronoField;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 @Mixin(ItemEntity.class)
 public abstract class ItemEntityMixin extends Entity {
@@ -35,8 +40,10 @@ public abstract class ItemEntityMixin extends Entity {
     private static final Config CONFIG = Saplanting.getConfig();
     private static final Logger LOGGER = Saplanting.getLogger();
 
-    private static final LinkedList<ItemEntityMixin> TASKS_1 = new LinkedList<>();
-    private static final LinkedList<ItemEntityMixin> TASKS_2 = new LinkedList<>();
+    @Unique
+    private static final ConcurrentLinkedDeque<ItemEntityMixin> CHECK_TASKS = new ConcurrentLinkedDeque<>();
+    @Unique
+    private static final ConcurrentLinkedDeque<PlantContext> PLANT_TASKS = new ConcurrentLinkedDeque<>();
     private static final HashSet<Item> containError = new HashSet<>();
     private static boolean SWITCH = true;
 
@@ -238,37 +245,31 @@ public abstract class ItemEntityMixin extends Entity {
      * Including:
      * 1. take item entity from tasks and throw it to ItemEntityMixin::run()
      * 2. auto stop and sleep
-     * */
+     */
+    @Unique
     private static void multiThreadRun() {
         try {
             while (Saplanting.THREAD_ALIVE && CONFIG.getAsBoolean("plantEnable") && CONFIG.getAsBoolean("multiThread")) {
-                LinkedList<ItemEntityMixin> TASKS;
-                if (SWITCH) {
-                    TASKS = TASKS_2;
-                } else {
-                    TASKS = TASKS_1;
-                }
-
-                while (!TASKS.isEmpty() && CONFIG.getAsBoolean("plantEnable") && Saplanting.THREAD_ALIVE && CONFIG.getAsBoolean("multiThread")) {
-                    ItemEntityMixin task = TASKS.removeFirst();
+                long start = LocalTime.now().getLong(ChronoField.MILLI_OF_DAY);
+                while (!CHECK_TASKS.isEmpty() && CONFIG.getAsBoolean("plantEnable") && Saplanting.THREAD_ALIVE && CONFIG.getAsBoolean("multiThread")) {
+                    ItemEntityMixin task = CHECK_TASKS.removeFirst();
                     Item item = task.getStack().getItem();
                     if (item instanceof AirBlockItem) { // In case item was removed mill-secs ago
                         continue;
                     }
                     task.run();
                 }
-
-                SWITCH = !SWITCH;
-
-                Thread.sleep(20);
+                long end = LocalTime.now().getLong(ChronoField.MILLI_OF_DAY);
+                long delta = end - start;
+                long complement = delta < 0 || delta > 20 ? 0 : 20 - delta;
+                Thread.sleep(complement);
             }
             LOGGER.info("Saplanting core thread exiting.");
         } catch (Exception e) {
             LOGGER.info("Saplanting core thread exited unexpectedly!");
             e.printStackTrace();
         }
-        TASKS_1.clear();
-        TASKS_2.clear();
+        CHECK_TASKS.clear();
         Saplanting.THREAD_ALIVE = false;
     }
 
@@ -276,24 +277,18 @@ public abstract class ItemEntityMixin extends Entity {
      * To visit task queue shared by saplanting-core-thread and MC server thread safely,
      * use this method to add items as tasks.
      * This should only be used by MC server thread.
-     * */
+     */
+    @Unique
     private void addToQueue() {
-        LinkedList<ItemEntityMixin> queue;
-        if (SWITCH) {
-            queue = TASKS_1;
-        } else {
-            queue = TASKS_2;
-        }
-
-        int size = queue.size();
+        int size = CHECK_TASKS.size();
         if (size > CONFIG.getAsInt("maxTask")) {
-            queue.clear();
+            CHECK_TASKS.clear();
             if (CONFIG.getAsBoolean("warnTaskQueue")) {
                 LOGGER.warn(String.format("Too many items! Cleared %s tasks.", size));
             }
         }
 
-        queue.add(this);
+        CHECK_TASKS.add(this);
     }
 
     private String getDetail() {
