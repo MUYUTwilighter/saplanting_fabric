@@ -2,6 +2,7 @@ package cool.muyucloud.saplanting.mixin;
 
 import cool.muyucloud.saplanting.util.Config;
 import cool.muyucloud.saplanting.Saplanting;
+import cool.muyucloud.saplanting.util.PlantContext;
 import net.minecraft.block.*;
 import net.minecraft.block.sapling.LargeTreeSaplingGenerator;
 import net.minecraft.entity.Entity;
@@ -19,13 +20,16 @@ import net.minecraft.world.World;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.time.LocalTime;
+import java.time.temporal.ChronoField;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 @Mixin(ItemEntity.class)
 public abstract class ItemEntityMixin extends Entity {
@@ -35,9 +39,11 @@ public abstract class ItemEntityMixin extends Entity {
     private static final Config CONFIG = Saplanting.getConfig();
     private static final Logger LOGGER = Saplanting.getLogger();
 
-    private static final LinkedList<ItemEntityMixin> TASKS_1 = new LinkedList<>();
-    private static final LinkedList<ItemEntityMixin> TASKS_2 = new LinkedList<>();
-    private static final HashSet<Item> containError = new HashSet<>();
+    @Unique
+    private static final ConcurrentLinkedDeque<ItemEntityMixin> CHECK_TASKS = new ConcurrentLinkedDeque<>();
+    @Unique
+    private static final ConcurrentLinkedDeque<PlantContext> PLANT_TASKS = new ConcurrentLinkedDeque<>();
+    private static final HashSet<Item> CONTAIN_ERROR = new HashSet<>();
     private static boolean SWITCH = true;
 
     int plantAge = 0;
@@ -52,12 +58,22 @@ public abstract class ItemEntityMixin extends Entity {
      * 1. filter unwanted item.
      * 2. kill/awaken thread according to property "multiThread"
      * 3. dispatch item entity as tasks and deal with them
-     *  */
+     */
     @Inject(method = "tick", at = @At("TAIL"))
     public void tick(CallbackInfo ci) {
+        if (this.getWorld().isClient() || !CONFIG.getAsBoolean("plantEnable")) {
+            return;
+        }
+
+        if (!PLANT_TASKS.isEmpty()) {
+            for (PlantContext context : PLANT_TASKS) {
+                context.plant();
+            }
+        }
+
         Item item = this.getStack().getItem();
         /* Is wanted item */
-        if (containError.contains(item) || this.world.isClient() || !Saplanting.isPlantItem(item) || !CONFIG.getAsBoolean("plantEnable")) {
+        if (CONTAIN_ERROR.contains(item) || !Saplanting.isPlantItem(item)) {
             return;
         }
 
@@ -72,9 +88,9 @@ public abstract class ItemEntityMixin extends Entity {
         if (!Saplanting.THREAD_ALIVE) {
             Saplanting.THREAD_ALIVE = true;
             LOGGER.info("Launching Saplanting core thread.");
-            Thread THREAD = new Thread(ItemEntityMixin::multiThreadRun);
-            THREAD.setName("SaplantingCoreThread");
-            THREAD.start();
+            Thread thread = new Thread(ItemEntityMixin::multiThreadRun);
+            thread.setName("SaplantingCoreThread");
+            thread.start();
         }
 
         /* Add item entity as tasks for multi thread run */
@@ -157,6 +173,7 @@ public abstract class ItemEntityMixin extends Entity {
      * 2. is it available to grow a small tree? So then do planting
      * Both of above involve environment check
      */
+    @Unique
     private void plant() {
         ItemStack stack = this.getStack();
         PlantBlock block = ((PlantBlock) ((BlockItem) stack.getItem()).getBlock());
@@ -166,6 +183,7 @@ public abstract class ItemEntityMixin extends Entity {
             pos = pos.up();
         }
 
+        World world = getWorld();
         if (block instanceof SaplingBlock) {
             SaplingGeneratorAccessor generator = ((SaplingGeneratorAccessor) ((SaplingBlockAccessor) block).getGenerator());
             /* Plant Large Tree */
@@ -175,10 +193,12 @@ public abstract class ItemEntityMixin extends Entity {
                         && block.canPlaceAt(state, world, tmpPos.add(1, 0, 0)) && world.getBlockState(tmpPos.add(1, 0, 0)).getMaterial().isReplaceable()
                         && block.canPlaceAt(state, world, tmpPos.add(1, 0, 1)) && world.getBlockState(tmpPos.add(1, 0, 1)).getMaterial().isReplaceable()
                         && block.canPlaceAt(state, world, tmpPos.add(0, 0, 1)) && world.getBlockState(tmpPos.add(0, 0, 1)).getMaterial().isReplaceable()) {
-                        world.setBlockState(tmpPos, state, Block.NOTIFY_ALL);
-                        world.setBlockState(tmpPos.add(1, 0, 0), state, Block.NOTIFY_ALL);
-                        world.setBlockState(tmpPos.add(0, 0, 1), state, Block.NOTIFY_ALL);
-                        world.setBlockState(tmpPos.add(1, 0, 1), state, Block.NOTIFY_ALL);
+                        PlantContext context = new PlantContext();
+                        context.setState(state);
+                        context.setPos(tmpPos);
+                        context.setWorld(world);
+                        context.setLarge(true);
+                        PLANT_TASKS.offer(context);
                         stack.setCount(stack.getCount() - 4);
                         return;
                     }
@@ -192,7 +212,12 @@ public abstract class ItemEntityMixin extends Entity {
         }
 
         /* Plant Small Objects(including sapling) */
-        world.setBlockState(pos, state, Block.NOTIFY_ALL);
+        PlantContext context = new PlantContext();
+        context.setState(state);
+        context.setPos(pos);
+        context.setWorld(world);
+        context.setLarge(true);
+        PLANT_TASKS.offer(context);
         stack.setCount(stack.getCount() - 1);
     }
 
@@ -204,7 +229,7 @@ public abstract class ItemEntityMixin extends Entity {
      * 2. tickCheck() and reset plantAge
      * 3. plantAge check then roundCheck()
      * 4. plant();
-    * */
+     */
     public void run() {
         ++this.plantAge;
 
@@ -224,7 +249,7 @@ public abstract class ItemEntityMixin extends Entity {
                 LOGGER.error("Some Errors occurred during planting this item:  ");
                 LOGGER.error(this.getDetail());
                 e.printStackTrace();
-                containError.add(this.getStack().getItem());
+                CONTAIN_ERROR.add(this.getStack().getItem());
                 if (CONFIG.getAsBoolean("autoBlackList")) {
                     CONFIG.addToBlackList(this.getStack().getItem());
                 }
@@ -238,37 +263,31 @@ public abstract class ItemEntityMixin extends Entity {
      * Including:
      * 1. take item entity from tasks and throw it to ItemEntityMixin::run()
      * 2. auto stop and sleep
-     * */
+     */
+    @Unique
     private static void multiThreadRun() {
         try {
             while (Saplanting.THREAD_ALIVE && CONFIG.getAsBoolean("plantEnable") && CONFIG.getAsBoolean("multiThread")) {
-                LinkedList<ItemEntityMixin> TASKS;
-                if (SWITCH) {
-                    TASKS = TASKS_2;
-                } else {
-                    TASKS = TASKS_1;
-                }
-
-                while (!TASKS.isEmpty() && CONFIG.getAsBoolean("plantEnable") && Saplanting.THREAD_ALIVE && CONFIG.getAsBoolean("multiThread")) {
-                    ItemEntityMixin task = TASKS.removeFirst();
+                long start = LocalTime.now().getLong(ChronoField.MILLI_OF_DAY);
+                while (!CHECK_TASKS.isEmpty() && CONFIG.getAsBoolean("plantEnable") && Saplanting.THREAD_ALIVE && CONFIG.getAsBoolean("multiThread")) {
+                    ItemEntityMixin task = CHECK_TASKS.removeFirst();
                     Item item = task.getStack().getItem();
                     if (item instanceof AirBlockItem) { // In case item was removed mill-secs ago
                         continue;
                     }
                     task.run();
                 }
-
-                SWITCH = !SWITCH;
-
-                Thread.sleep(20);
+                long end = LocalTime.now().getLong(ChronoField.MILLI_OF_DAY);
+                long delta = end - start;
+                long complement = delta < 0 || delta > 20 ? 0 : 20 - delta;
+                Thread.sleep(complement);
             }
             LOGGER.info("Saplanting core thread exiting.");
         } catch (Exception e) {
             LOGGER.info("Saplanting core thread exited unexpectedly!");
             e.printStackTrace();
         }
-        TASKS_1.clear();
-        TASKS_2.clear();
+        CHECK_TASKS.clear();
         Saplanting.THREAD_ALIVE = false;
     }
 
@@ -276,24 +295,18 @@ public abstract class ItemEntityMixin extends Entity {
      * To visit task queue shared by saplanting-core-thread and MC server thread safely,
      * use this method to add items as tasks.
      * This should only be used by MC server thread.
-     * */
+     */
+    @Unique
     private void addToQueue() {
-        LinkedList<ItemEntityMixin> queue;
-        if (SWITCH) {
-            queue = TASKS_1;
-        } else {
-            queue = TASKS_2;
-        }
-
-        int size = queue.size();
+        int size = CHECK_TASKS.size();
         if (size > CONFIG.getAsInt("maxTask")) {
-            queue.clear();
+            CHECK_TASKS.clear();
             if (CONFIG.getAsBoolean("warnTaskQueue")) {
                 LOGGER.warn(String.format("Too many items! Cleared %s tasks.", size));
             }
         }
 
-        queue.add(this);
+        CHECK_TASKS.add(this);
     }
 
     private String getDetail() {
