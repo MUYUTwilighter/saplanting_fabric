@@ -2,6 +2,7 @@ package cool.muyucloud.saplanting.mixin;
 
 import cool.muyucloud.saplanting.util.Config;
 import cool.muyucloud.saplanting.Saplanting;
+import cool.muyucloud.saplanting.util.PlantContext;
 import cool.muyucloud.saplanting.util.Translation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -10,9 +11,12 @@ import net.minecraft.text.*;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.function.BooleanSupplier;
 
 @Mixin(ServerWorld.class)
 public class ServerWorldMixin {
@@ -32,6 +36,15 @@ public class ServerWorldMixin {
         boolean isOp = this.server.getPlayerManager().isOperator(player.getGameProfile());
         if (CONFIG.getAsBoolean("showTitleOnOpConnected") && isOp && !CONFIG.getAsBoolean("plantEnable")) {
             player.sendMessage(MSG, false);
+        }
+    }
+
+    @Unique
+    @Inject(method = "tick", at = @At("TAIL"))
+    private void tick(BooleanSupplier shouldKeepTicking, CallbackInfo ci) {
+        while (!PlantContext.PLANT_TASKS.isEmpty()) {
+            PlantContext context = PlantContext.PLANT_TASKS.poll();
+            context.plant();
         }
     }
 }
