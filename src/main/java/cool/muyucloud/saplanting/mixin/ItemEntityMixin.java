@@ -31,21 +31,24 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
+import static cool.muyucloud.saplanting.util.PlantContext.PLANT_TASKS;
+
 @Mixin(ItemEntity.class)
 public abstract class ItemEntityMixin extends Entity {
     @Shadow
     public abstract ItemStack getStack();
 
+    @Unique
     private static final Config CONFIG = Saplanting.getConfig();
+    @Unique
     private static final Logger LOGGER = Saplanting.getLogger();
 
     @Unique
     private static final ConcurrentLinkedDeque<ItemEntityMixin> CHECK_TASKS = new ConcurrentLinkedDeque<>();
     @Unique
-    private static final ConcurrentLinkedDeque<PlantContext> PLANT_TASKS = new ConcurrentLinkedDeque<>();
     private static final HashSet<Item> CONTAIN_ERROR = new HashSet<>();
-    private static boolean SWITCH = true;
 
+    @Unique
     int plantAge = 0;
 
     public ItemEntityMixin(EntityType<?> type, World world) {
@@ -63,12 +66,6 @@ public abstract class ItemEntityMixin extends Entity {
     public void tick(CallbackInfo ci) {
         if (this.getWorld().isClient() || !CONFIG.getAsBoolean("plantEnable")) {
             return;
-        }
-
-        if (!PLANT_TASKS.isEmpty()) {
-            for (PlantContext context : PLANT_TASKS) {
-                context.plant();
-            }
         }
 
         Item item = this.getStack().getItem();
@@ -216,7 +213,7 @@ public abstract class ItemEntityMixin extends Entity {
         context.setState(state);
         context.setPos(pos);
         context.setWorld(world);
-        context.setLarge(true);
+        context.setLarge(false);
         PLANT_TASKS.offer(context);
         stack.setCount(stack.getCount() - 1);
     }
