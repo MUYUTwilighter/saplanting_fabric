@@ -13,12 +13,16 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
+import net.minecraft.world.gen.feature.ConfiguredFeature;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -29,7 +33,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.time.LocalTime;
 import java.time.temporal.ChronoField;
 import java.util.HashSet;
-import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Mixin(ItemEntity.class)
 public abstract class ItemEntityMixin extends Entity {
@@ -42,9 +46,7 @@ public abstract class ItemEntityMixin extends Entity {
     private static final Logger LOGGER = Saplanting.getLogger();
 
     @Unique
-    private static final ConcurrentLinkedDeque<ItemEntityMixin> CHECK_TASKS = new ConcurrentLinkedDeque<>();
-    @Unique
-    private static final ConcurrentLinkedDeque<PlantContext> PLANT_TASKS = new ConcurrentLinkedDeque<>();
+    private static final ConcurrentLinkedQueue<ItemEntityMixin> CHECK_TASKS = new ConcurrentLinkedQueue<>();
     @Unique
     private static final HashSet<Item> CONTAIN_ERROR = new HashSet<>();
 
@@ -66,12 +68,6 @@ public abstract class ItemEntityMixin extends Entity {
     public void tick(CallbackInfo ci) {
         if (this.getWorld().isClient() || !CONFIG.getAsBoolean("plantEnable")) {
             return;
-        }
-
-        if (!PLANT_TASKS.isEmpty()) {
-            for (PlantContext context : PLANT_TASKS) {
-                context.plant();
-            }
         }
 
         Item item = this.getStack().getItem();
@@ -203,15 +199,15 @@ public abstract class ItemEntityMixin extends Entity {
                         context.setPos(tmpPos);
                         context.setWorld(world);
                         context.setLarge(true);
-                        PLANT_TASKS.offer(context);
+                        PlantContext.PLANT_TASKS.offer(context);
                         stack.setCount(stack.getCount() - 4);
                         return;
                     }
                 }
             }
-
             /* Ignore Shape */
-            if (!CONFIG.getAsBoolean("ignoreShape") && generator.getTreeFeature(Random.create(), true) == null) {
+            RegistryKey<ConfiguredFeature<?, ?>> feature = generator.getTreeFeature(Random.create(), true);
+            if (!CONFIG.getAsBoolean("ignoreShape") && feature == null) {
                 return;
             }
         }
@@ -221,9 +217,218 @@ public abstract class ItemEntityMixin extends Entity {
         context.setState(state);
         context.setPos(pos);
         context.setWorld(world);
-        context.setLarge(true);
-        PLANT_TASKS.offer(context);
+        context.setLarge(false);
+        PlantContext.PLANT_TASKS.offer(context);
         stack.setCount(stack.getCount() - 1);
+    }
+
+    @Unique
+    @Nullable
+    private BlockPos findLargeSpace(@NotNull BlockPos center) {
+        // X X X
+        // X ? X
+        // X X X
+        if (this.isPosValid(center)) {
+            // X X X
+            // ? 1 X
+            // X X X
+            BlockPos pos = center.add(-1, 0, 0);
+            if (this.isPosValid(pos)) {
+                // X ? X
+                // 1 1 X
+                // X X X
+                pos = center.add(0, 0, 1);
+                if (this.isPosValid(pos)) {
+                    // ? 1 X
+                    // 1 1 X
+                    // X X X
+                    pos = center.add(-1, 0, 1);
+                    if (this.isPosValid(pos)) {
+                        // S 1 X
+                        // 1 1 X
+                        // X X X
+                        return center.add(-1, 0, 1);
+                    } else {
+                        // 0 1 X
+                        // 1 1 X
+                        // X ? X
+                        pos = center.add(0, 0, -1);
+                        if (this.isPosValid(pos)) {
+                            // 0 1 X
+                            // 1 1 X
+                            // ? 1 X
+                            pos = center.add(-1, 0, -1);
+                            if (this.isPosValid(pos)) {
+                                // 0 1 X
+                                // S 1 X
+                                // 1 1 X
+                                return center.add(-1, 0, 0);
+                            } else {
+                                // 0 1 X
+                                // 1 1 ?
+                                // 0 1 X
+                                pos = center.add(1, 0, 0);
+                                if (this.isPosValid(pos)) {
+                                    // 0 1 ?
+                                    // 1 1 1
+                                    // 0 1 X
+                                    pos = center.add(1, 0, 1);
+                                    if (this.isPosValid(pos)) {
+                                        // 0 S 1
+                                        // 1 1 1
+                                        // 0 1 X
+                                        return center.add(0, 0, 1);
+                                    } else {
+                                        // 0 1 0
+                                        // 1 1 1
+                                        // 0 1 ?
+                                        pos = center.add(1, 0, -1);
+                                        if (this.isPosValid(pos)) {
+                                            // 0 1 0
+                                            // 1 S 1
+                                            // 0 1 1
+                                            return center;
+                                        } else {
+                                            // 0 1 0
+                                            // 1 1 1
+                                            // 0 1 0
+                                            return null;
+                                        }
+                                    }
+                                } else {
+                                    // 0 1 X
+                                    // 1 1 0
+                                    // 0 1 X
+                                    return null;
+                                }
+                            }
+                        } else {
+                            // 0 1 ?
+                            // 1 1 ?
+                            // X 0 X
+                            if (this.isPosValid(center.add(1, 0, 0)) && this.isPosValid(center.add(1, 0, 1))) {
+                                // 0 S 1
+                                // 1 1 1
+                                // X 0 X
+                                return center.add(0, 0, 1);
+                            } else {
+                                // 0 1 F
+                                // 1 1 F
+                                // X 0 X
+                                return null;
+                            }
+                        }
+                    }
+                } else {
+                    // X 0 X
+                    // 1 1 X
+                    // X ? X
+                    pos = center.add(0, 0, -1);
+                    if (this.isPosValid(pos)) {
+                        // X 0 X
+                        // 1 1 X
+                        // ? 1 X
+                        pos = center.add(-1, 0, -1);
+                        if (this.isPosValid(pos)) {
+                            // X 0 X
+                            // 1 1 X
+                            // 1 1 X
+                            return center.add(-1, 0, 0);
+                        } else {
+                            // X 0 X
+                            // 1 1 ?
+                            // 0 1 ?
+                            if (this.isPosValid(center.add(1, 0, 0)) && this.isPosValid(center.add(1, 0, -1))) {
+                                // X 0 X
+                                // 1 S 1
+                                // 0 1 1
+                                return center;
+                            } else {
+                                // X 0 X
+                                // 1 1 F
+                                // 0 1 F
+                                return null;
+                            }
+                        }
+                    } else {
+                        // X 0 X
+                        // 1 1 X
+                        // X 0 X
+                        return null;
+                    }
+                }
+            } else {
+                // X X X
+                // 0 1 ?
+                // X X X
+                pos = center.add(1, 0, 0);
+                if (this.isPosValid(pos)) {
+                    // X ? X
+                    // 0 1 1
+                    // X X X
+                    pos = center.add(0, 0, 1);
+                    if (this.isPosValid(pos)) {
+                        // X 1 ?
+                        // 0 1 1
+                        // X X X
+                        pos = center.add(1, 0, 1);
+                        if (this.isPosValid(pos)) {
+                            // X S 1
+                            // 0 1 1
+                            // X X X
+                            return center;
+                        } else {
+                            // X 1 0
+                            // 0 1 1
+                            // X ? ?
+                            if (this.isPosValid(center.add(0, 0, -1)) && this.isPosValid(center.add(1, 0, -1))) {
+                                // X 1 0
+                                // 0 S 1
+                                // X 1 1
+                                return center;
+                            } else {
+                                // X 1 0
+                                // 0 1 1
+                                // X F F
+                                return null;
+                            }
+                        }
+                    } else {
+                        // X 0 X
+                        // 0 1 1
+                        // X ? ?
+                        if (this.isPosValid(center.add(0, 0, -1)) && this.isPosValid(center.add(1, 0, -1))) {
+                            // X 0 X
+                            // 0 S 1
+                            // X 1 1
+                            return center;
+                        } else {
+                            // X 0 X
+                            // 0 1 1
+                            // X F F
+                            return null;
+                        }
+                    }
+                } else {
+                    // X X X
+                    // 0 1 0
+                    // X X X
+                    return null;
+                }
+            }
+        } else {
+            // X X X
+            // X 0 X
+            // X X X
+            return null;
+        }
+    }
+
+    @Unique
+    private Boolean isPosValid(@NotNull BlockPos pos) {
+        PlantBlock block = (PlantBlock) ((BlockItem) this.getStack().getItem()).getBlock();
+        BlockState state = block.getDefaultState();
+        return block.canPlaceAt(state, this.getWorld(), pos);
     }
 
     /**
@@ -276,7 +481,7 @@ public abstract class ItemEntityMixin extends Entity {
             while (Saplanting.THREAD_ALIVE && CONFIG.getAsBoolean("plantEnable") && CONFIG.getAsBoolean("multiThread")) {
                 long start = LocalTime.now().getLong(ChronoField.MILLI_OF_DAY);
                 while (!CHECK_TASKS.isEmpty() && CONFIG.getAsBoolean("plantEnable") && Saplanting.THREAD_ALIVE && CONFIG.getAsBoolean("multiThread")) {
-                    ItemEntityMixin task = CHECK_TASKS.removeFirst();
+                    ItemEntityMixin task = CHECK_TASKS.poll();
                     Item item = task.getStack().getItem();
                     if (item instanceof AirBlockItem) { // In case item was removed mill-secs ago
                         continue;
@@ -311,7 +516,6 @@ public abstract class ItemEntityMixin extends Entity {
                 LOGGER.warn(String.format("Too many items! Cleared %s tasks.", size));
             }
         }
-
         CHECK_TASKS.add(this);
     }
 
