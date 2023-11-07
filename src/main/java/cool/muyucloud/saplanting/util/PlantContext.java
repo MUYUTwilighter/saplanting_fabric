@@ -4,7 +4,11 @@ import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 public class PlantContext {
+    public static final ConcurrentLinkedQueue<PlantContext> PLANT_TASKS = new ConcurrentLinkedQueue<>();
+
     private BlockState state;
     private World world;
     private BlockPos pos;
@@ -12,11 +16,11 @@ public class PlantContext {
 
     public void plant() {
         if (large) {
-            world.setBlockState(pos, state);
-        } else {
             for (BlockPos tmpPos : BlockPos.iterate(pos, pos.add(1, 0, 1))) {
                 world.setBlockState(tmpPos, state);
             }
+        } else {
+            world.setBlockState(pos, state);
         }
     }
 

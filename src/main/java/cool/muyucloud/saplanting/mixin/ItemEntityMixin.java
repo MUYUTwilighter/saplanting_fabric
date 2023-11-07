@@ -33,6 +33,8 @@ import java.time.temporal.ChronoField;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
+import static cool.muyucloud.saplanting.util.PlantContext.PLANT_TASKS;
+
 @Mixin(ItemEntity.class)
 public abstract class ItemEntityMixin extends Entity {
     @Shadow
@@ -48,8 +50,6 @@ public abstract class ItemEntityMixin extends Entity {
 
     @Unique
     private static final ConcurrentLinkedDeque<ItemEntityMixin> CHECK_TASKS = new ConcurrentLinkedDeque<>();
-    @Unique
-    private static final ConcurrentLinkedDeque<PlantContext> PLANT_TASKS = new ConcurrentLinkedDeque<>();
     @Unique
     private static final HashSet<Item> CONTAIN_ERROR = new HashSet<>();
 
@@ -71,12 +71,6 @@ public abstract class ItemEntityMixin extends Entity {
     public void tick(CallbackInfo ci) {
         if (this.getWorld().isClient() || !CONFIG.getAsBoolean("plantEnable")) {
             return;
-        }
-
-        if (!PLANT_TASKS.isEmpty()) {
-            for (PlantContext context : PLANT_TASKS) {
-                context.plant();
-            }
         }
 
         Item item = this.getStack().getItem();
@@ -226,7 +220,7 @@ public abstract class ItemEntityMixin extends Entity {
         context.setState(state);
         context.setPos(pos);
         context.setWorld(world);
-        context.setLarge(true);
+        context.setLarge(false);
         PLANT_TASKS.offer(context);
         stack.setCount(stack.getCount() - 1);
     }
