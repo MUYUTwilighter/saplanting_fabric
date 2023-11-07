@@ -28,7 +28,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.time.LocalTime;
 import java.time.temporal.ChronoField;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
@@ -37,16 +36,17 @@ public abstract class ItemEntityMixin extends Entity {
     @Shadow
     public abstract ItemStack getStack();
 
+    @Unique
     private static final Config CONFIG = Saplanting.getConfig();
+    @Unique
     private static final Logger LOGGER = Saplanting.getLogger();
 
     @Unique
     private static final ConcurrentLinkedDeque<ItemEntityMixin> CHECK_TASKS = new ConcurrentLinkedDeque<>();
     @Unique
-    private static final ConcurrentLinkedDeque<PlantContext> PLANT_TASKS = new ConcurrentLinkedDeque<>();
-    private static final HashSet<Item> containError = new HashSet<>();
-    private static boolean SWITCH = true;
+    private static final HashSet<Item> CONTAIN_ERROR = new HashSet<>();
 
+    @Unique
     int plantAge = 0;
 
     public ItemEntityMixin(EntityType<?> type, World world) {
@@ -64,7 +64,7 @@ public abstract class ItemEntityMixin extends Entity {
     public void tick(CallbackInfo ci) {
         Item item = this.getStack().getItem();
         /* Is wanted item */
-        if (containError.contains(item) || this.world.isClient() || !Saplanting.isPlantItem(item) || !CONFIG.getAsBoolean("plantEnable")) {
+        if (CONTAIN_ERROR.contains(item) || this.world.isClient() || !Saplanting.isPlantItem(item) || !CONFIG.getAsBoolean("plantEnable")) {
             return;
         }
 
@@ -98,6 +98,7 @@ public abstract class ItemEntityMixin extends Entity {
      * 4. block BELOW the itemEntity allows the plant to grow
      * 5. block AT the itemEntity is replaceable
      */
+    @Unique
     private boolean tickCheck() {
         BlockItem item = ((BlockItem) this.getStack().getItem());
         if (!this.onGround || !CONFIG.getAsBoolean("plantEnable") || !Saplanting.isPlantAllowed(item)) {
@@ -124,6 +125,7 @@ public abstract class ItemEntityMixin extends Entity {
      * 1. are players nearby?
      * 2. are there other blocks nearby representing there might be trees?
      */
+    @Unique
     private boolean roundCheck() {
         PlantBlock block = ((PlantBlock) ((BlockItem) this.getStack().getItem()).getBlock());
         BlockPos pos = this.getBlockPos();
@@ -164,6 +166,7 @@ public abstract class ItemEntityMixin extends Entity {
      * 2. is it available to grow a small tree? So then do planting
      * Both of above involve environment check
      */
+    @Unique
     private void plant() {
         ItemStack stack = this.getStack();
         PlantBlock block = ((PlantBlock) ((BlockItem) stack.getItem()).getBlock());
@@ -182,10 +185,12 @@ public abstract class ItemEntityMixin extends Entity {
                         && block.canPlaceAt(state, world, tmpPos.add(1, 0, 0)) && world.getBlockState(tmpPos.add(1, 0, 0)).getMaterial().isReplaceable()
                         && block.canPlaceAt(state, world, tmpPos.add(1, 0, 1)) && world.getBlockState(tmpPos.add(1, 0, 1)).getMaterial().isReplaceable()
                         && block.canPlaceAt(state, world, tmpPos.add(0, 0, 1)) && world.getBlockState(tmpPos.add(0, 0, 1)).getMaterial().isReplaceable()) {
-                        world.setBlockState(tmpPos, state);
-                        world.setBlockState(tmpPos.add(1, 0, 0), state);
-                        world.setBlockState(tmpPos.add(0, 0, 1), state);
-                        world.setBlockState(tmpPos.add(1, 0, 1), state);
+                        PlantContext context = new PlantContext();
+                        context.setState(state);
+                        context.setPos(tmpPos);
+                        context.setWorld(world);
+                        context.setLarge(true);
+                        PlantContext.PLANT_TASKS.offer(context);
                         stack.setCount(stack.getCount() - 4);
                         return;
                     }
@@ -199,7 +204,12 @@ public abstract class ItemEntityMixin extends Entity {
         }
 
         /* Plant Small Objects(including sapling) */
-        world.setBlockState(pos, state);
+        PlantContext context = new PlantContext();
+        context.setState(state);
+        context.setPos(pos);
+        context.setWorld(world);
+        context.setLarge(false);
+        PlantContext.PLANT_TASKS.offer(context);
         stack.setCount(stack.getCount() - 1);
     }
 
@@ -212,6 +222,7 @@ public abstract class ItemEntityMixin extends Entity {
      * 3. plantAge check then roundCheck()
      * 4. plant();
     * */
+    @Unique
     public void run() {
         ++this.plantAge;
 
@@ -231,7 +242,7 @@ public abstract class ItemEntityMixin extends Entity {
                 LOGGER.error("Some Errors occurred during planting this item:  ");
                 LOGGER.error(this.getDetail());
                 e.printStackTrace();
-                containError.add(this.getStack().getItem());
+                CONTAIN_ERROR.add(this.getStack().getItem());
                 if (CONFIG.getAsBoolean("autoBlackList")) {
                     CONFIG.addToBlackList(this.getStack().getItem());
                 }
@@ -291,6 +302,7 @@ public abstract class ItemEntityMixin extends Entity {
         CHECK_TASKS.add(this);
     }
 
+    @Unique
     private String getDetail() {
         Vec3d pos = this.getPos();
         String biomes = this.world.getBiome(this.getBlockPos()).toString();
