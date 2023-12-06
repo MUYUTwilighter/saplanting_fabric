@@ -13,6 +13,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.*;
+import net.minecraft.util.Formatting;
 
 import java.util.List;
 
@@ -20,7 +21,7 @@ public class Command {
     private static final Config CONFIG = Saplanting.getConfig();
     private static final Config DEFAULT_CONFIG = Saplanting.getDefaultConfig();
     private static final Style CLICKABLE_COMMAND = Style.EMPTY
-        .withColor(TextColor.parse("green"))
+        .withColor(Formatting.GREEN)
         .withUnderline(true);
     private static final Style CLICKABLE_FILE = Style.EMPTY
         .withUnderline(true);
@@ -222,7 +223,7 @@ public class Command {
 
         /* ======TITLE====== */
         MutableText title = Text.literal(Translation.translate("command.saplanting.title")).setStyle(Style.EMPTY
-            .withColor(TextColor.parse("gold")));
+            .withColor(Formatting.GOLD));
         sendFeedback(source, title, false);
         /* - <RESET> KEY : VALUE */
         for (int i = (page - 1) * 8; i < page * 8 && i < arr.size(); ++i) {

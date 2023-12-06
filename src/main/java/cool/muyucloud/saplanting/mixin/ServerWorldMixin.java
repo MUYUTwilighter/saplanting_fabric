@@ -8,6 +8,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.*;
+import net.minecraft.util.Formatting;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -30,7 +31,7 @@ public class ServerWorldMixin {
         .append(Text.literal(Translation.translate("saplanting.onPlayerConnected.plantDisable.click"))
             .setStyle(Style.EMPTY
                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/saplanting property plantEnable true"))
-                .withColor(TextColor.parse("green"))
+                .withColor(Formatting.GREEN)
                 .withUnderline(true)));
 
     @Inject(method = "onPlayerConnected", at = @At("TAIL"))

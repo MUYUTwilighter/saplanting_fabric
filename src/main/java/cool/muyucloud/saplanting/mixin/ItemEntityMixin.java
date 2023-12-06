@@ -1,10 +1,10 @@
 package cool.muyucloud.saplanting.mixin;
 
 import cool.muyucloud.saplanting.Saplanting;
+import cool.muyucloud.saplanting.reflection.SaplingGeneratorReflection;
 import cool.muyucloud.saplanting.util.Config;
 import cool.muyucloud.saplanting.util.PlantContext;
 import net.minecraft.block.*;
-import net.minecraft.block.sapling.LargeTreeSaplingGenerator;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
@@ -15,6 +15,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.tag.BlockTags;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
@@ -40,10 +41,14 @@ public abstract class ItemEntityMixin extends Entity {
     @Shadow
     public abstract ItemStack getStack();
 
+    @Shadow public abstract Text getName();
+
     @Unique
     private static final Config CONFIG = Saplanting.getConfig();
     @Unique
     private static final Logger LOGGER = Saplanting.getLogger();
+    @Unique
+    private static final Random RANDOM = Random.create();
 
     @Unique
     private static final ConcurrentLinkedQueue<ItemEntityMixin> CHECK_TASKS = new ConcurrentLinkedQueue<>();
@@ -58,10 +63,10 @@ public abstract class ItemEntityMixin extends Entity {
     }
 
     /**
-     * Pre-operation that directly injected into ItemEntity#tick()
-     * Including:
-     * 1. filter unwanted item.
-     * 2. kill/awaken thread according to property "multiThread"
+     * Pre-operation that directly injected into ItemEntity#tick()<br/>
+     * Including:<br/>
+     * 1. filter unwanted item.<br/>
+     * 2. kill/awaken thread according to property "multiThread"<br/>
      * 3. dispatch item entity as tasks and deal with them
      */
     @Inject(method = "tick", at = @At("TAIL"))
@@ -97,13 +102,13 @@ public abstract class ItemEntityMixin extends Entity {
     }
 
     /**
-     * This check validation of plant-operation every single game-tick,
-     * it goes before round-check
-     * Including:
-     * 1. item is on ground
-     * 2. saplanting is enabled
-     * 3. is not a water-oriented plant
-     * 4. block BELOW the itemEntity allows the plant to grow
+     * This check validation of plant-operation every single game-tick,<br/>
+     * it goes before round-check<br/>
+     * Including:<br/>
+     * 1. item is on ground<br/>
+     * 2. saplanting is enabled<br/>
+     * 3. is not a water-oriented plant<br/>
+     * 4. block BELOW the itemEntity allows the plant to grow<br/>
      * 5. block AT the itemEntity is replaceable
      */
     @Unique
@@ -127,10 +132,10 @@ public abstract class ItemEntityMixin extends Entity {
     }
 
     /**
-     * This check validation of plant-operation every time when reaching plant-delay,
-     * it goes after tick-check
-     * Including:
-     * 1. are players nearby?
+     * This check validation of plant-operation every time when reaching plant-delay,<br/>
+     * it goes after tick-check<br/>
+     * Including:<br/>
+     * 1. are players nearby?<br/>
      * 2. are there other blocks nearby representing there might be trees?
      */
     @Unique
@@ -168,10 +173,10 @@ public abstract class ItemEntityMixin extends Entity {
     }
 
     /**
-     * Plant operation, but also combines some checks.
-     * Including:
-     * 1. is planting large tree allowed? is it a large tree? So then do planting
-     * 2. is it available to grow a small tree? So then do planting
+     * Plant operation, but also combines some checks.<br/>
+     * Including:<br/>
+     * 1. is planting large tree allowed? is it a large tree? So then do planting<br/>
+     * 2. is it available to grow a small tree? So then do planting<br/>
      * Both of above involve environment check
      */
     @Unique
@@ -186,9 +191,11 @@ public abstract class ItemEntityMixin extends Entity {
 
         World world = getWorld();
         if (block instanceof SaplingBlock) {
-            SaplingGeneratorAccessor generator = ((SaplingGeneratorAccessor) ((SaplingBlockAccessor) block).getGenerator());
+            SaplingGenerator generator = ((SaplingBlockAccessor) block).getGenerator();
+            SaplingGeneratorReflection generatorReflection = SaplingGeneratorReflection.of(generator);
             /* Plant Large Tree */
-            if (CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && generator instanceof LargeTreeSaplingGenerator) {
+            RegistryKey<ConfiguredFeature<?, ?>> megaTree = generatorReflection.getMegaTreeFeature(RANDOM);
+            if (CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && megaTree != null) {
                 for (BlockPos tmpPos : BlockPos.iterate(pos, pos.add(-1, 0, -1))) {
                     if (block.canPlaceAt(state, world, tmpPos) && world.getBlockState(tmpPos).isReplaceable()
                         && block.canPlaceAt(state, world, tmpPos.add(1, 0, 0)) && world.getBlockState(tmpPos.add(1, 0, 0)).isReplaceable()
@@ -206,7 +213,7 @@ public abstract class ItemEntityMixin extends Entity {
                 }
             }
             /* Ignore Shape */
-            RegistryKey<ConfiguredFeature<?, ?>> feature = generator.getTreeFeature(Random.create(), true);
+            RegistryKey<ConfiguredFeature<?, ?>> feature = generatorReflection.getSmallTreeFeature(Random.create(), false);
             if (!CONFIG.getAsBoolean("ignoreShape") && feature == null) {
                 return;
             }
@@ -528,7 +535,7 @@ public abstract class ItemEntityMixin extends Entity {
         BlockItem item = ((BlockItem) this.getStack().getItem());
         Block block = item.getBlock();
         String output = String.format("ItemEntity: \"%s\" at %s in world \"%s\", biomes \"%s\"\n",
-            this.getEntityName(), pos, dim, biomes);
+            this.getDisplayName(), pos, dim, biomes);
         output += String.format("BlockItem: \"%s\"(%s)\n",
             item.getName(), Registries.ITEM.getId(item));
         output += String.format("Block: \"%s\"(%s)",

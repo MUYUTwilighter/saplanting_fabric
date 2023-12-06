@@ -6,7 +6,6 @@
     "mixins": [
         "ItemEntityMixin",
         "SaplingBlockAccessor",
-        "SaplingGeneratorAccessor",
         "ServerWorldMixin"
     ],
     "client": [
