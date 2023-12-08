@@ -1,5 +1,7 @@
 package cool.muyucloud.saplanting.reflection;
 
+import com.google.common.reflect.Reflection;
+import com.google.gson.internal.reflect.ReflectionHelper;
 import net.minecraft.block.SaplingGenerator;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.util.math.random.Random;
@@ -13,8 +15,8 @@ public class SaplingGeneratorReflection {
 
     static {
         try {
-            GET_SMALL_TREE_FEATURE = SaplingGenerator.class.getDeclaredMethod("getSmallTreeFeature", Random.class, boolean.class);
-            GET_MEGA_TREE_FEATURE = SaplingGenerator.class.getDeclaredMethod("getMegaTreeFeature", Random.class);
+            GET_SMALL_TREE_FEATURE = SaplingGenerator.class.getDeclaredMethod("method_54087", Random.class, boolean.class);
+            GET_MEGA_TREE_FEATURE = SaplingGenerator.class.getDeclaredMethod("method_54086", Random.class);
             GET_SMALL_TREE_FEATURE.setAccessible(true);
             GET_MEGA_TREE_FEATURE.setAccessible(true);
         } catch (NoSuchMethodException e) {
