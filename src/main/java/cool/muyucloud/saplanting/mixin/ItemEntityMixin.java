@@ -1,7 +1,7 @@
 package cool.muyucloud.saplanting.mixin;
 
 import cool.muyucloud.saplanting.Saplanting;
-import cool.muyucloud.saplanting.reflection.SaplingGeneratorReflection;
+import cool.muyucloud.saplanting.access.SaplingGeneratorAccess;
 import cool.muyucloud.saplanting.util.Config;
 import cool.muyucloud.saplanting.util.PlantContext;
 import net.minecraft.block.*;
@@ -47,8 +47,6 @@ public abstract class ItemEntityMixin extends Entity {
     private static final Config CONFIG = Saplanting.getConfig();
     @Unique
     private static final Logger LOGGER = Saplanting.getLogger();
-    @Unique
-    private static final Random RANDOM = Random.create();
 
     @Unique
     private static final ConcurrentLinkedQueue<ItemEntityMixin> CHECK_TASKS = new ConcurrentLinkedQueue<>();
@@ -191,11 +189,9 @@ public abstract class ItemEntityMixin extends Entity {
 
         World world = getWorld();
         if (block instanceof SaplingBlock) {
-            SaplingGenerator generator = ((SaplingBlockAccessor) block).getGenerator();
-            SaplingGeneratorReflection generatorReflection = SaplingGeneratorReflection.of(generator);
+            SaplingGeneratorAccess generator = (SaplingGeneratorAccess) ((SaplingBlockAccessor) block).getGenerator();
             /* Plant Large Tree */
-            RegistryKey<ConfiguredFeature<?, ?>> megaTree = generatorReflection.getMegaTreeFeature(RANDOM);
-            if (CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && megaTree != null) {
+            if (CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && generator.hasLargeTree()) {
                 for (BlockPos tmpPos : BlockPos.iterate(pos, pos.add(-1, 0, -1))) {
                     if (block.canPlaceAt(state, world, tmpPos) && world.getBlockState(tmpPos).isReplaceable()
                         && block.canPlaceAt(state, world, tmpPos.add(1, 0, 0)) && world.getBlockState(tmpPos.add(1, 0, 0)).isReplaceable()
@@ -213,8 +209,7 @@ public abstract class ItemEntityMixin extends Entity {
                 }
             }
             /* Ignore Shape */
-            RegistryKey<ConfiguredFeature<?, ?>> feature = generatorReflection.getSmallTreeFeature(Random.create(), false);
-            if (!CONFIG.getAsBoolean("ignoreShape") && feature == null) {
+            if (!CONFIG.getAsBoolean("ignoreShape") && !generator.hasSmallTree()) {
                 return;
             }
         }
