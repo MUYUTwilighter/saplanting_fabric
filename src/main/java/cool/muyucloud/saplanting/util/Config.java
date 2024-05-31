@@ -126,7 +126,7 @@ public class Config {
                 JsonArray blackList = this.properties.getAsJsonArray("blackList");
                 for (int i = 0; i < array.size(); ++i) {
                     JsonElement jsonElement = array.get(i);
-                    Identifier id = new Identifier(jsonElement.getAsString());
+                    Identifier id = Identifier.of(jsonElement.getAsString());
                     Item item = Registries.ITEM.get(id);
                     if (Registries.ITEM.containsId(id) && !blackList.contains(jsonElement) && Saplanting.isPlantItem(item)) {
                         blackList.add(jsonElement);

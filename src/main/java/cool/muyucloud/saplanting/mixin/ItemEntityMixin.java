@@ -1,11 +1,11 @@
 package cool.muyucloud.saplanting.mixin;
 
 import cool.muyucloud.saplanting.Saplanting;
+import cool.muyucloud.saplanting.access.PlantBlockAccess;
+import cool.muyucloud.saplanting.access.SaplingGeneratorAccess;
 import cool.muyucloud.saplanting.util.Config;
 import cool.muyucloud.saplanting.util.PlantContext;
 import net.minecraft.block.*;
-import net.minecraft.block.sapling.LargeTreeSaplingGenerator;
-import net.minecraft.block.sapling.SaplingGenerator;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
@@ -18,7 +18,6 @@ import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -46,8 +45,6 @@ public abstract class ItemEntityMixin extends Entity {
     private static final Config CONFIG = Saplanting.getConfig();
     @Unique
     private static final Logger LOGGER = Saplanting.getLogger();
-    @Unique
-    private static final Random RANDOM = Random.create();
 
     @Unique
     private static final ConcurrentLinkedQueue<ItemEntityMixin> CHECK_TASKS = new ConcurrentLinkedQueue<>();
@@ -73,20 +70,17 @@ public abstract class ItemEntityMixin extends Entity {
         if (this.getWorld().isClient() || !CONFIG.getAsBoolean("plantEnable")) {
             return;
         }
-
         Item item = this.getStack().getItem();
         /* Is wanted item */
         if (CONTAIN_ERROR.contains(item) || !Saplanting.isPlantItem(item)) {
             return;
         }
-
         /* Kill if multi thread disabled, and deal with item here */
         if (!CONFIG.getAsBoolean("multiThread")) {
             Saplanting.THREAD_ALIVE = false;
             this.run();
             return;
         }
-
         /* Run Thread if thread not alive */
         if (!Saplanting.THREAD_ALIVE) {
             Saplanting.THREAD_ALIVE = true;
@@ -95,7 +89,6 @@ public abstract class ItemEntityMixin extends Entity {
             thread.setName("SaplantingCoreThread");
             thread.start();
         }
-
         /* Add item entity as tasks for multi thread run */
         this.addToQueue();
     }
@@ -190,27 +183,23 @@ public abstract class ItemEntityMixin extends Entity {
 
         World world = getWorld();
         if (block instanceof SaplingBlock) {
-            SaplingGenerator generator = ((SaplingBlockAccessor) block).getGenerator();
+            SaplingGeneratorAccess generatorAccess = (SaplingGeneratorAccess) (Object) ((SaplingBlockAccessor) block).getGenerator();
             /* Plant Large Tree */
-            if (CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && generator instanceof LargeTreeSaplingGenerator) {
-                for (BlockPos tmpPos : BlockPos.iterate(pos, pos.add(-1, 0, -1))) {
-                    if (block.canPlaceAt(state, world, tmpPos) && world.getBlockState(tmpPos).isReplaceable()
-                        && block.canPlaceAt(state, world, tmpPos.add(1, 0, 0)) && world.getBlockState(tmpPos.add(1, 0, 0)).isReplaceable()
-                        && block.canPlaceAt(state, world, tmpPos.add(1, 0, 1)) && world.getBlockState(tmpPos.add(1, 0, 1)).isReplaceable()
-                        && block.canPlaceAt(state, world, tmpPos.add(0, 0, 1)) && world.getBlockState(tmpPos.add(0, 0, 1)).isReplaceable()) {
-                        PlantContext context = new PlantContext();
-                        context.setState(state);
-                        context.setPos(tmpPos);
-                        context.setWorld(world);
-                        context.setLarge(true);
-                        PlantContext.PLANT_TASKS.offer(context);
-                        stack.setCount(stack.getCount() - 4);
-                        return;
-                    }
+            if (CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && generatorAccess.hasLargeTree()) {
+                BlockPos tmpPos = this.findLargeSpace(pos);
+                if (tmpPos != null) {
+                    PlantContext context = new PlantContext();
+                    context.setState(state);
+                    context.setPos(tmpPos);
+                    context.setWorld(world);
+                    context.setLarge(true);
+                    PlantContext.PLANT_TASKS.offer(context);
+                    stack.setCount(stack.getCount() - 4);
+                    return;
                 }
             }
             /* Ignore Shape */
-            if (!CONFIG.getAsBoolean("ignoreShape") && generator == null) {
+            if (!CONFIG.getAsBoolean("ignoreShape") && !generatorAccess.hasSmallTree()) {
                 return;
             }
         }
@@ -250,7 +239,7 @@ public abstract class ItemEntityMixin extends Entity {
                         // S 1 X
                         // 1 1 X
                         // X X X
-                        return center.add(-1, 0, 1);
+                        return center.add(-1, 0, 0);
                     } else {
                         // 0 1 X
                         // 1 1 X
@@ -265,7 +254,7 @@ public abstract class ItemEntityMixin extends Entity {
                                 // 0 1 X
                                 // S 1 X
                                 // 1 1 X
-                                return center.add(-1, 0, 0);
+                                return center.add(-1, 0, -1);
                             } else {
                                 // 0 1 X
                                 // 1 1 ?
@@ -280,7 +269,7 @@ public abstract class ItemEntityMixin extends Entity {
                                         // 0 S 1
                                         // 1 1 1
                                         // 0 1 X
-                                        return center.add(0, 0, 1);
+                                        return center;
                                     } else {
                                         // 0 1 0
                                         // 1 1 1
@@ -290,7 +279,7 @@ public abstract class ItemEntityMixin extends Entity {
                                             // 0 1 0
                                             // 1 S 1
                                             // 0 1 1
-                                            return center;
+                                            return center.add(0, 0, -1);
                                         } else {
                                             // 0 1 0
                                             // 1 1 1
@@ -313,7 +302,7 @@ public abstract class ItemEntityMixin extends Entity {
                                 // 0 S 1
                                 // 1 1 1
                                 // X 0 X
-                                return center.add(0, 0, 1);
+                                return center;
                             } else {
                                 // 0 1 F
                                 // 1 1 F
@@ -336,7 +325,7 @@ public abstract class ItemEntityMixin extends Entity {
                             // X 0 X
                             // 1 1 X
                             // 1 1 X
-                            return center.add(-1, 0, 0);
+                            return center.add(-1, 0, -1);
                         } else {
                             // X 0 X
                             // 1 1 ?
@@ -345,7 +334,7 @@ public abstract class ItemEntityMixin extends Entity {
                                 // X 0 X
                                 // 1 S 1
                                 // 0 1 1
-                                return center;
+                                return center.add(0, 0, -1);
                             } else {
                                 // X 0 X
                                 // 1 1 F
@@ -388,7 +377,7 @@ public abstract class ItemEntityMixin extends Entity {
                                 // X 1 0
                                 // 0 S 1
                                 // X 1 1
-                                return center;
+                                return center.add(0, 0, -1);
                             } else {
                                 // X 1 0
                                 // 0 1 1
@@ -404,7 +393,7 @@ public abstract class ItemEntityMixin extends Entity {
                             // X 0 X
                             // 0 S 1
                             // X 1 1
-                            return center;
+                            return center.add(0, 0, -1);
                         } else {
                             // X 0 X
                             // 0 1 1
@@ -431,7 +420,7 @@ public abstract class ItemEntityMixin extends Entity {
     private Boolean isPosValid(@NotNull BlockPos pos) {
         PlantBlock block = (PlantBlock) ((BlockItem) this.getStack().getItem()).getBlock();
         BlockState state = block.getDefaultState();
-        return block.canPlaceAt(state, this.getWorld(), pos);
+        return ((PlantBlockAccess) block).invokeCanPlaceAt(state, this.getWorld(), pos);
     }
 
     /**
@@ -527,7 +516,7 @@ public abstract class ItemEntityMixin extends Entity {
         Vec3d pos = this.getPos();
         World world = this.getWorld();
         String biomes = world.getBiome(this.getBlockPos()).toString();
-        String dim = world.getDimensionKey().getRegistry().toString();
+        String dim = world.getRegistryKey().toString();
         BlockItem item = ((BlockItem) this.getStack().getItem());
         Block block = item.getBlock();
         String output = String.format("ItemEntity: \"%s\" at %s in world \"%s\", biomes \"%s\"\n",
