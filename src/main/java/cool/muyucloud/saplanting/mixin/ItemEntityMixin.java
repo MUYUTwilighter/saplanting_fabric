@@ -1,10 +1,11 @@
 package cool.muyucloud.saplanting.mixin;
 
 import cool.muyucloud.saplanting.Saplanting;
-import cool.muyucloud.saplanting.reflection.SaplingGeneratorReflection;
 import cool.muyucloud.saplanting.util.Config;
 import cool.muyucloud.saplanting.util.PlantContext;
 import net.minecraft.block.*;
+import net.minecraft.block.sapling.LargeTreeSaplingGenerator;
+import net.minecraft.block.sapling.SaplingGenerator;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
@@ -13,14 +14,12 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
-import net.minecraft.world.gen.feature.ConfiguredFeature;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -192,10 +191,8 @@ public abstract class ItemEntityMixin extends Entity {
         World world = getWorld();
         if (block instanceof SaplingBlock) {
             SaplingGenerator generator = ((SaplingBlockAccessor) block).getGenerator();
-            SaplingGeneratorReflection generatorReflection = SaplingGeneratorReflection.of(generator);
             /* Plant Large Tree */
-            RegistryKey<ConfiguredFeature<?, ?>> megaTree = generatorReflection.getMegaTreeFeature(RANDOM);
-            if (CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && megaTree != null) {
+            if (CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && generator instanceof LargeTreeSaplingGenerator) {
                 for (BlockPos tmpPos : BlockPos.iterate(pos, pos.add(-1, 0, -1))) {
                     if (block.canPlaceAt(state, world, tmpPos) && world.getBlockState(tmpPos).isReplaceable()
                         && block.canPlaceAt(state, world, tmpPos.add(1, 0, 0)) && world.getBlockState(tmpPos.add(1, 0, 0)).isReplaceable()
@@ -213,8 +210,7 @@ public abstract class ItemEntityMixin extends Entity {
                 }
             }
             /* Ignore Shape */
-            RegistryKey<ConfiguredFeature<?, ?>> feature = generatorReflection.getSmallTreeFeature(Random.create(), false);
-            if (!CONFIG.getAsBoolean("ignoreShape") && feature == null) {
+            if (!CONFIG.getAsBoolean("ignoreShape") && generator == null) {
                 return;
             }
         }
