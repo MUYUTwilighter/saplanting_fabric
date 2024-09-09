@@ -13,14 +13,12 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.tag.BlockTags;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
-import net.minecraft.world.gen.feature.ConfiguredFeature;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -198,9 +196,9 @@ public abstract class ItemEntityMixin extends Entity {
                         && block.canPlaceAt(state, world, tmpPos.add(1, 0, 1)) && world.getBlockState(tmpPos.add(1, 0, 1)).isReplaceable()
                         && block.canPlaceAt(state, world, tmpPos.add(0, 0, 1)) && world.getBlockState(tmpPos.add(0, 0, 1)).isReplaceable()) {
                         PlantContext context = new PlantContext();
-                        context.setState(state);
+                        context.setItem(stack.getItem());
                         context.setPos(tmpPos);
-                        context.setWorld(world);
+                        context.setWorld((ServerWorld) world);
                         context.setLarge(true);
                         PlantContext.PLANT_TASKS.offer(context);
                         stack.setCount(stack.getCount() - 4);
@@ -216,9 +214,9 @@ public abstract class ItemEntityMixin extends Entity {
 
         /* Plant Small Objects(including sapling) */
         PlantContext context = new PlantContext();
-        context.setState(state);
+        context.setItem(stack.getItem());
         context.setPos(pos);
-        context.setWorld(world);
+        context.setWorld((ServerWorld) world);
         context.setLarge(false);
         PlantContext.PLANT_TASKS.offer(context);
         stack.setCount(stack.getCount() - 1);
