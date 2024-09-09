@@ -12,6 +12,7 @@ import net.minecraft.item.AirBlockItem;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -19,8 +20,6 @@ import net.minecraft.util.math.random.Random;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -31,17 +30,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.time.LocalTime;
 import java.time.temporal.ChronoField;
 import java.util.HashSet;
-import java.util.concurrent.ConcurrentLinkedDeque;
-
-import static cool.muyucloud.saplanting.util.PlantContext.PLANT_TASKS;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Mixin(ItemEntity.class)
 public abstract class ItemEntityMixin extends Entity {
     @Shadow
     public abstract ItemStack getStack();
-
-    @Shadow
-    public abstract void setCovetedItem();
 
     @Unique
     private static final Config CONFIG = Saplanting.getConfig();
@@ -49,7 +43,7 @@ public abstract class ItemEntityMixin extends Entity {
     private static final Logger LOGGER = Saplanting.getLogger();
 
     @Unique
-    private static final ConcurrentLinkedDeque<ItemEntityMixin> CHECK_TASKS = new ConcurrentLinkedDeque<>();
+    private static final ConcurrentLinkedQueue<ItemEntityMixin> CHECK_TASKS = new ConcurrentLinkedQueue<>();
     @Unique
     private static final HashSet<Item> CONTAIN_ERROR = new HashSet<>();
 
@@ -112,7 +106,7 @@ public abstract class ItemEntityMixin extends Entity {
     @Unique
     private boolean tickCheck() {
         BlockItem item = ((BlockItem) this.getStack().getItem());
-        if (!this.isOnGround() || !CONFIG.getAsBoolean("plantEnable") || !Saplanting.isPlantAllowed(item)) {
+        if (!this.onGround || !CONFIG.getAsBoolean("plantEnable") || !Saplanting.isPlantAllowed(item)) {
             return false;
         }
 
@@ -126,7 +120,7 @@ public abstract class ItemEntityMixin extends Entity {
             return false;
         }
 
-        return state.canPlaceAt(getWorld(), pos) && getWorld().getBlockState(pos).getMaterial().isReplaceable();
+        return state.canPlaceAt(world, pos) && world.getBlockState(pos).getMaterial().isReplaceable();
     }
 
     /**
@@ -146,7 +140,7 @@ public abstract class ItemEntityMixin extends Entity {
 
         /* Player Nearby Check */
         int playerAround = CONFIG.getAsInt("playerAround");
-        if (playerAround > 0 && getWorld().isPlayerInRange(getX(), getY(), getZ(), playerAround)) {
+        if (playerAround > 0 && world.isPlayerInRange(getX(), getY(), getZ(), playerAround)) {
             return false;
         }
 
@@ -157,7 +151,7 @@ public abstract class ItemEntityMixin extends Entity {
                 for (BlockPos tmpPos : BlockPos.iterate(
                     pos.add(avoidDense, avoidDense, avoidDense),
                     pos.add(-avoidDense, -avoidDense, -avoidDense))) {
-                    Block tmpBlock = getWorld().getBlockState(tmpPos).getBlock();
+                    Block tmpBlock = world.getBlockState(tmpPos).getBlock();
                     BlockState state = tmpBlock.getDefaultState();
                     if (tmpBlock instanceof LeavesBlock
                         || tmpBlock instanceof SaplingBlock
@@ -187,7 +181,6 @@ public abstract class ItemEntityMixin extends Entity {
             pos = pos.up();
         }
 
-        World world = getWorld();
         if (block instanceof SaplingBlock) {
             SaplingGeneratorAccessor generator = ((SaplingGeneratorAccessor) ((SaplingBlockAccessor) block).getGenerator());
             /* Plant Large Tree */
@@ -198,11 +191,11 @@ public abstract class ItemEntityMixin extends Entity {
                         && block.canPlaceAt(state, world, tmpPos.add(1, 0, 1)) && world.getBlockState(tmpPos.add(1, 0, 1)).getMaterial().isReplaceable()
                         && block.canPlaceAt(state, world, tmpPos.add(0, 0, 1)) && world.getBlockState(tmpPos.add(0, 0, 1)).getMaterial().isReplaceable()) {
                         PlantContext context = new PlantContext();
-                        context.setState(state);
+                        context.setItem((BlockItem) stack.getItem());
                         context.setPos(tmpPos);
-                        context.setWorld(world);
+                        context.setWorld((ServerWorld) world);
                         context.setLarge(true);
-                        PLANT_TASKS.offer(context);
+                        PlantContext.PLANT_TASKS.offer(context);
                         stack.setCount(stack.getCount() - 4);
                         return;
                     }
@@ -217,219 +210,12 @@ public abstract class ItemEntityMixin extends Entity {
 
         /* Plant Small Objects(including sapling) */
         PlantContext context = new PlantContext();
-        context.setState(state);
+        context.setItem((BlockItem) stack.getItem());
         context.setPos(pos);
-        context.setWorld(world);
+        context.setWorld((ServerWorld) world);
         context.setLarge(false);
-        PLANT_TASKS.offer(context);
+        PlantContext.PLANT_TASKS.offer(context);
         stack.setCount(stack.getCount() - 1);
-    }
-
-    @Nullable
-    private BlockPos findLargeSpace(@NotNull BlockPos center) {
-        // X X X
-        // X ? X
-        // X X X
-        if (this.isPosValid(center)) {
-            // X X X
-            // ? 1 X
-            // X X X
-            BlockPos pos = center.add(-1, 0, 0);
-            if (this.isPosValid(pos)) {
-                // X ? X
-                // 1 1 X
-                // X X X
-                pos = center.add(0, 0, 1);
-                if (this.isPosValid(pos)) {
-                    // ? 1 X
-                    // 1 1 X
-                    // X X X
-                    pos = center.add(-1, 0, 1);
-                    if (this.isPosValid(pos)) {
-                        // S 1 X
-                        // 1 1 X
-                        // X X X
-                        return center.add(-1, 0, 1);
-                    } else {
-                        // 0 1 X
-                        // 1 1 X
-                        // X ? X
-                        pos = center.add(0, 0, -1);
-                        if (this.isPosValid(pos)) {
-                            // 0 1 X
-                            // 1 1 X
-                            // ? 1 X
-                            pos = center.add(-1, 0, -1);
-                            if (this.isPosValid(pos)) {
-                                // 0 1 X
-                                // S 1 X
-                                // 1 1 X
-                                return center.add(-1, 0, 0);
-                            } else {
-                                // 0 1 X
-                                // 1 1 ?
-                                // 0 1 X
-                                pos = center.add(1, 0, 0);
-                                if (this.isPosValid(pos)) {
-                                    // 0 1 ?
-                                    // 1 1 1
-                                    // 0 1 X
-                                    pos = center.add(1, 0, 1);
-                                    if (this.isPosValid(pos)) {
-                                        // 0 S 1
-                                        // 1 1 1
-                                        // 0 1 X
-                                        return center.add(0, 0, 1);
-                                    } else {
-                                        // 0 1 0
-                                        // 1 1 1
-                                        // 0 1 ?
-                                        pos = center.add(1, 0, -1);
-                                        if (this.isPosValid(pos)) {
-                                            // 0 1 0
-                                            // 1 S 1
-                                            // 0 1 1
-                                            return center;
-                                        } else {
-                                            // 0 1 0
-                                            // 1 1 1
-                                            // 0 1 0
-                                            return null;
-                                        }
-                                    }
-                                } else {
-                                    // 0 1 X
-                                    // 1 1 0
-                                    // 0 1 X
-                                    return null;
-                                }
-                            }
-                        } else {
-                            // 0 1 ?
-                            // 1 1 ?
-                            // X 0 X
-                            if (this.isPosValid(center.add(1, 0, 0)) && this.isPosValid(center.add(1, 0, 1))) {
-                                // 0 S 1
-                                // 1 1 1
-                                // X 0 X
-                                return center.add(0, 0, 1);
-                            } else {
-                                // 0 1 F
-                                // 1 1 F
-                                // X 0 X
-                                return null;
-                            }
-                        }
-                    }
-                } else {
-                    // X 0 X
-                    // 1 1 X
-                    // X ? X
-                    pos = center.add(0, 0, -1);
-                    if (this.isPosValid(pos)) {
-                        // X 0 X
-                        // 1 1 X
-                        // ? 1 X
-                        pos = center.add(-1, 0, -1);
-                        if (this.isPosValid(pos)) {
-                            // X 0 X
-                            // 1 1 X
-                            // 1 1 X
-                            return center.add(-1, 0, 0);
-                        } else {
-                            // X 0 X
-                            // 1 1 ?
-                            // 0 1 ?
-                            if (this.isPosValid(center.add(1, 0, 0)) && this.isPosValid(center.add(1, 0, -1))){
-                                // X 0 X
-                                // 1 S 1
-                                // 0 1 1
-                                return center;
-                            } else {
-                                // X 0 X
-                                // 1 1 F
-                                // 0 1 F
-                                return null;
-                            }
-                        }
-                    } else {
-                        // X 0 X
-                        // 1 1 X
-                        // X 0 X
-                        return null;
-                    }
-                }
-            } else {
-                // X X X
-                // 0 1 ?
-                // X X X
-                pos = center.add(1, 0, 0);
-                if (this.isPosValid(pos)) {
-                    // X ? X
-                    // 0 1 1
-                    // X X X
-                    pos = center.add(0, 0, 1);
-                    if (this.isPosValid(pos)) {
-                        // X 1 ?
-                        // 0 1 1
-                        // X X X
-                        pos = center.add(1, 0, 1);
-                        if (this.isPosValid(pos)) {
-                            // X S 1
-                            // 0 1 1
-                            // X X X
-                            return center;
-                        } else {
-                            // X 1 0
-                            // 0 1 1
-                            // X ? ?
-                            if (this.isPosValid(center.add(0, 0, -1)) && this.isPosValid(center.add(1, 0, -1))) {
-                                // X 1 0
-                                // 0 S 1
-                                // X 1 1
-                                return center;
-                            } else {
-                                // X 1 0
-                                // 0 1 1
-                                // X F F
-                                return null;
-                            }
-                        }
-                    } else {
-                        // X 0 X
-                        // 0 1 1
-                        // X ? ?
-                        if (this.isPosValid(center.add(0, 0, -1)) && this.isPosValid(center.add(1, 0, -1))) {
-                            // X 0 X
-                            // 0 S 1
-                            // X 1 1
-                            return center;
-                        } else {
-                            // X 0 X
-                            // 0 1 1
-                            // X F F
-                            return null;
-                        }
-                    }
-                } else {
-                    // X X X
-                    // 0 1 0
-                    // X X X
-                    return null;
-                }
-            }
-        } else {
-            // X X X
-            // X 0 X
-            // X X X
-            return null;
-        }
-    }
-
-    private Boolean isPosValid(@NotNull BlockPos pos) {
-        PlantBlock block = (PlantBlock) ((BlockItem) this.getStack().getItem()).getBlock();
-        BlockState state = block.getDefaultState();
-        return block.canPlaceAt(state, this.getWorld(), pos);
     }
 
     /**
@@ -482,7 +268,7 @@ public abstract class ItemEntityMixin extends Entity {
             while (Saplanting.THREAD_ALIVE && CONFIG.getAsBoolean("plantEnable") && CONFIG.getAsBoolean("multiThread")) {
                 long start = LocalTime.now().getLong(ChronoField.MILLI_OF_DAY);
                 while (!CHECK_TASKS.isEmpty() && CONFIG.getAsBoolean("plantEnable") && Saplanting.THREAD_ALIVE && CONFIG.getAsBoolean("multiThread")) {
-                    ItemEntityMixin task = CHECK_TASKS.removeFirst();
+                    ItemEntityMixin task = CHECK_TASKS.poll();
                     Item item = task.getStack().getItem();
                     if (item instanceof AirBlockItem) { // In case item was removed mill-secs ago
                         continue;
@@ -517,16 +303,14 @@ public abstract class ItemEntityMixin extends Entity {
                 LOGGER.warn(String.format("Too many items! Cleared %s tasks.", size));
             }
         }
-
         CHECK_TASKS.add(this);
     }
 
     @Unique
     private String getDetail() {
         Vec3d pos = this.getPos();
-        World world = this.getWorld();
-        String biomes = world.getBiome(this.getBlockPos()).toString();
-        String dim = world.getDimensionKey().getRegistry().toString();
+        String biomes = this.world.getBiome(this.getBlockPos()).toString();
+        String dim = this.world.getDimensionKey().getRegistry().toString();
         BlockItem item = ((BlockItem) this.getStack().getItem());
         Block block = item.getBlock();
         String output = String.format("ItemEntity: \"%s\" at %s in world \"%s\", biomes \"%s\"\n",
