@@ -190,12 +190,11 @@ public abstract class ItemEntityMixin extends Entity {
                 BlockPos tmpPos = this.findLargeSpace(pos);
                 if (tmpPos != null) {
                     PlantContext context = new PlantContext();
-                    context.setItem(stack.getItem());
+                    context.setStack(stack);
                     context.setPos(tmpPos);
                     context.setWorld((ServerWorld) world);
                     context.setLarge(true);
                     PlantContext.PLANT_TASKS.offer(context);
-                    stack.setCount(stack.getCount() - 4);
                     return;
                 }
             }
@@ -207,12 +206,11 @@ public abstract class ItemEntityMixin extends Entity {
 
         /* Plant Small Objects(including sapling) */
         PlantContext context = new PlantContext();
-        context.setItem(stack.getItem());
+        context.setStack(stack);
         context.setPos(pos);
         context.setWorld((ServerWorld) world);
         context.setLarge(false);
         PlantContext.PLANT_TASKS.offer(context);
-        stack.setCount(stack.getCount() - 1);
     }
 
     @Unique
