@@ -1,7 +1,9 @@
 package cool.muyucloud.saplanting.util;
 
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
@@ -16,7 +18,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class PlantContext {
     public static final ConcurrentLinkedQueue<PlantContext> PLANT_TASKS = new ConcurrentLinkedQueue<>();
 
-    private BlockItem item;
+    private ItemStack stack;
     private ServerWorld world;
     private BlockPos pos;
     private Boolean large;
@@ -39,15 +41,26 @@ public class PlantContext {
     private void useOnBlock(BlockPos pos) {
         Vec3d posVec = new Vec3d(pos.getX(), pos.getY() + 1, pos.getZ());
         ItemUsageContext context = new ItemUsageContext(fakePlayer, Hand.MAIN_HAND, new BlockHitResult(posVec, Direction.UP, pos, false));
-        item.useOnBlock(context);
+        stack.useOnBlock(context);
+        if (this.getTargetBlock(pos).isOf(this.getBlock())) {
+            stack.setCount(stack.getCount() - 1);
+        }
     }
 
-    public Item getItem() {
-        return item;
+    private Block getBlock() {
+        return ((BlockItem) stack.getItem()).getBlock();
     }
 
-    public void setItem(BlockItem item) {
-        this.item = item;
+    private BlockState getTargetBlock(BlockPos pos) {
+        return this.world.getBlockState(pos);
+    }
+
+    public ItemStack getStack() {
+        return stack;
+    }
+
+    public void setStack(ItemStack stack) {
+        this.stack = stack;
     }
 
     public World getWorld() {
