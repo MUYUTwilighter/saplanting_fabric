@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "saplanting",
+  "version": "${version}",
+  "name": "saplanting",
+  "description": "",
+  "authors": [
+    "MUYU_Twilighter"
+  ],
+  "contact": {
+    "homepage": ""
+  },
+  "license": "All-Rights-Reserved",
+  "icon": "assets/saplanting/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "cool.muyucloud.saplanting.fabric.SaplantingFabric"
+    ],
+    "client": [
+      "cool.muyucloud.saplanting.fabric.client.SaplantingFabricClient"
+    ]
+  },
+  "mixins": [
+    "saplanting.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": "*",
+    "minecraft": "~1.20",
+    "java": ">=17",
+    "fabric-api": "*"
+  },
+  "suggests": {
+  }
+}
