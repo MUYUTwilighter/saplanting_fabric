@@ -12,22 +12,26 @@ import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(TreeGrower.class)
 public abstract class TreeGrowerMixin implements TreeGrowerAccess {
-    @Shadow @Nullable protected abstract ResourceKey<ConfiguredFeature<?, ?>> getConfiguredFeature(RandomSource arg, boolean bl);
+    @Shadow
+    @Nullable
+    protected abstract ResourceKey<ConfiguredFeature<?, ?>> getConfiguredFeature(RandomSource arg, boolean bl);
 
-    @Shadow @Nullable protected abstract ResourceKey<ConfiguredFeature<?, ?>> getConfiguredMegaFeature(RandomSource randomSource);
+    @Shadow
+    @Nullable
+    protected abstract ResourceKey<ConfiguredFeature<?, ?>> getConfiguredMegaFeature(RandomSource randomSource);
 
     @Unique
     private static final RandomSource RANDOM = RandomSource.create();
 
     @Unique
     @Override
-    public boolean hasLargeTree() {
+    public boolean saplanting_fabric$hasLargeTree() {
         return this.getConfiguredMegaFeature(RANDOM) != null;
     }
 
     @Unique
     @Override
-    public boolean hasSmallTree() {
+    public boolean saplanting_fabric$hasSmallTree() {
         return this.getConfiguredFeature(RANDOM, false) != null;
     }
 }

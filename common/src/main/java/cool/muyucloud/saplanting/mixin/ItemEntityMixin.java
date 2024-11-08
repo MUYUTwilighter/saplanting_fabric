@@ -206,7 +206,7 @@ public abstract class ItemEntityMixin extends Entity {
             if (block instanceof SaplingBlock saplingBlock) {
                 TreeGrowerAccess generator = (TreeGrowerAccess) (Object) ((SaplingBlockAccess) block).getTreeGrower();
                 /* Plant Large Tree */
-                if (CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && generator.hasLargeTree()) {
+                if (CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && generator.saplanting_fabric$hasLargeTree()) {
                     for (BlockPos tmpPos : BlockPos.betweenClosed(pos, pos.offset(-1, 0, -1))) {
                         if (((BushBlockAccess) saplingBlock).saplanting_fabric$invokeCanSurvive(state, world, tmpPos) && world.getBlockState(tmpPos).canBeReplaced()
                             && ((BushBlockAccess) saplingBlock).saplanting_fabric$invokeCanSurvive(state, world, tmpPos.offset(1, 0, 0)) && world.getBlockState(tmpPos.offset(1, 0, 0)).canBeReplaced()
@@ -223,7 +223,7 @@ public abstract class ItemEntityMixin extends Entity {
                     }
                 }
                 /* Ignore Shape */
-                if (!CONFIG.getAsBoolean("ignoreShape") && !generator.hasSmallTree()) {
+                if (!CONFIG.getAsBoolean("ignoreShape") && !generator.saplanting_fabric$hasSmallTree()) {
                     return;
                 }
             }

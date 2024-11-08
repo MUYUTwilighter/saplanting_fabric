@@ -12,7 +12,7 @@ A fabric mod that automatically plants sapling drops in minecraft games.
 Saplings from other mods are supported theoretically.  
 Other plants (Actually, all items) are also available, if you configure them.  
 Make sure that your Minecraft version is supported by the mod.  
-This is a fabric mod, fabric api is required.
+If you use Fabric client, fabric api is required.
 
 ## Introduction
 
@@ -27,9 +27,9 @@ use [commands](#Commands) below or [configure the JSON file](#Configurations).
 ## How to Install
 
 1. Download the Jar File of proper version.
-2. Copy or cut the jar file you've just downloaded to your mod path (usually ".../.minecraft/mods" or "
-   .../.minecraft/versions/\<VersionName\>/mods")
-3. Make sure you have installed fabric api and fabric of proper versions
+2. Copy or cut the jar file you've just downloaded to your mod path (usually `.../.minecraft/mods` or
+   `.../.minecraft/versions/\<VersionName\>/mods`)
+3. If you are using fabric, make sure you have installed fabric api and fabric of proper versions
 
 ### About Multiplayer
 
@@ -38,7 +38,7 @@ If only client side is installed, it only works for single player.
 
 ## Configurations
 
-Config file is located at ".../.minecraft/config/saplanting.json"  
+Config file is located at `.../.minecraft/config/saplanting.json`  
 Config file will only be automatically loaded when a world-save is loaded. If you want the changes in this file loaded
 manually, use [commands](#Commands) to do so.
 

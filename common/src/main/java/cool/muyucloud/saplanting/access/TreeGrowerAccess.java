@@ -4,8 +4,8 @@ import org.spongepowered.asm.mixin.Unique;
 
 public interface TreeGrowerAccess {
     @Unique
-    boolean hasLargeTree();
+    boolean saplanting_fabric$hasLargeTree();
 
     @Unique
-    boolean hasSmallTree();
+    boolean saplanting_fabric$hasSmallTree();
 }
