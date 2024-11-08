@@ -68,14 +68,12 @@ public class Command {
         LiteralArgumentBuilder<CommandSourceStack> language = Commands.literal("language");
         language.executes(context -> queryLanguage(context.getSource()));
         // /saplanting language switch <LANG>
-        LiteralArgumentBuilder<CommandSourceStack> change = Commands.literal("switch");
         for (String name : CONFIG.getValidLangs()) {
-            change.then(Commands.literal(name).executes(context -> updateLanguage(name, context.getSource())));
+            language.then(Commands.literal(name).executes(context -> updateLanguage(name, context.getSource())));
         }
         // /saplanting language switch default
-        change.then(Commands.literal("default")
+        language.then(Commands.literal("default")
             .executes(context -> updateLanguage("en_us", context.getSource())));
-        language.then(change);
         root.then(language);
 
         /* /saplanting file <OPERATION> */
@@ -112,6 +110,7 @@ public class Command {
                     for (ResourceLocation id : itemIds) {
                         builder.suggest(id.toString());
                     }
+                    builder.suggest("*");
                     return builder.buildFuture();
                 })
                 .executes(context ->
@@ -143,6 +142,7 @@ public class Command {
                     for (ResourceLocation id : itemIds) {
                         builder.suggest(id.toString());
                     }
+                    builder.suggest("*");
                     return builder.buildFuture();
                 })
                 .executes(context ->
@@ -166,25 +166,26 @@ public class Command {
                 displayWhitelist(context.getSource(), IntegerArgumentType.getInteger(context, "page"))));
         // saplanting whitelist add <item>
         whitelist.then(Commands.literal("add")
-                .executes(context -> {
-                    Player player = context.getSource().getPlayer();
-                    if (player == null) {
-                        return 0;
-                    }
-                    Item item = player.getMainHandItem().getItem();
-                    if (item.equals(Items.AIR)) {
-                        return 0;
-                    }
-                    String value = BuiltInRegistries.ITEM.getKey(item).toString();
-                    return addToWhitelist(value, context.getSource());
-                })
-                .requires(CommandSourceStack::isPlayer)
+            .executes(context -> {
+                Player player = context.getSource().getPlayer();
+                if (player == null) {
+                    return 0;
+                }
+                Item item = player.getMainHandItem().getItem();
+                if (item.equals(Items.AIR)) {
+                    return 0;
+                }
+                String value = BuiltInRegistries.ITEM.getKey(item).toString();
+                return addToWhitelist(value, context.getSource());
+            })
+            .requires(CommandSourceStack::isPlayer)
             .then(Commands.argument("item", StringArgumentType.greedyString())
                 .suggests((context, builder) -> {
                     Set<ResourceLocation> itemIds = BuiltInRegistries.ITEM.keySet();
                     for (ResourceLocation id : itemIds) {
                         builder.suggest(id.toString());
                     }
+                    builder.suggest("*");
                     return builder.buildFuture();
                 })
                 .executes(context ->
@@ -216,6 +217,7 @@ public class Command {
                     for (ResourceLocation id : itemIds) {
                         builder.suggest(id.toString());
                     }
+                    builder.suggest("*");
                     return builder.buildFuture();
                 })
                 .executes(context ->

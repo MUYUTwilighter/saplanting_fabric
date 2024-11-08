@@ -11,7 +11,7 @@ authors = "MUYU_Twilighter"
 description = '''
 
 '''
-#logoFile = ""
+logoFile = "assets/saplanting/icon.png"
 
 [[dependencies.saplanting]]
 modId = "forge"

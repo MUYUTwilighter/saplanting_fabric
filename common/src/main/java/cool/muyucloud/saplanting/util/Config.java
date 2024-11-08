@@ -296,12 +296,15 @@ public class Config {
             String entry = e.getAsString();
             if (entry.startsWith("#")) {
                 TagKey<Item> tag = TagKey.create(BuiltInRegistries.ITEM.key(), new ResourceLocation(entry.substring(1)));
-                if ( TagUtil.isIn(tag, item)) {
+                if (TagUtil.isIn(tag, item)) {
                     return true;
                 }
+            } else if (entry.equals("*")) {
+                return true;
             } else {
-                ResourceLocation id = new ResourceLocation(entry);
-                if (BuiltInRegistries.ITEM.getKey(item).equals(id)) {
+                ResourceLocation entryId = new ResourceLocation(entry);
+                ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(item);
+                if (itemId.equals(entryId)) {
                     return true;
                 }
             }
@@ -401,10 +404,17 @@ public class Config {
             String entry = e.getAsString();
             if (entry.startsWith("#")) {
                 TagKey<Item> tag = TagKey.create(BuiltInRegistries.ITEM.key(), new ResourceLocation(entry.substring(1)));
-                return TagUtil.isIn(tag, item);
+                if (TagUtil.isIn(tag, item)) {
+                    return true;
+                }
+            } else if (entry.equals("*")) {
+                return true;
             } else {
-                ResourceLocation id = new ResourceLocation(entry);
-                return BuiltInRegistries.ITEM.getKey(item).equals(id);
+                ResourceLocation entryId = new ResourceLocation(entry);
+                ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(item);
+                if (itemId.equals(entryId)) {
+                    return true;
+                }
             }
         }
         return false;
@@ -488,6 +498,8 @@ public class Config {
         if (itemLike.startsWith("#")) {
             ResourceLocation id = ResourceLocation.tryParse(itemLike.substring(1));
             return id == null ? null : "#" + id;
+        } else if (itemLike.equals("*")) {
+            return "*";
         } else {
             ResourceLocation id = ResourceLocation.tryParse(itemLike);
             return id == null ? null : id.toString();
