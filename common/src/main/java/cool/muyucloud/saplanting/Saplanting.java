@@ -74,6 +74,6 @@ public final class Saplanting {
     }
 
     public static boolean isPlantAllowed(Item item) {
-        return isPlantItem(item) && CONFIG.isInWhitelist(item) && (CONFIG.getAsBoolean("enableBlacklist") && !CONFIG.isInBlacklist(item));
+        return isPlantItem(item) && CONFIG.isInWhitelist(item) && !CONFIG.isInBlacklist(item);
     }
 }
