@@ -2,7 +2,6 @@ package cool.muyucloud.saplanting.util;
 
 import com.google.gson.*;
 import cool.muyucloud.saplanting.Saplanting;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -16,7 +15,10 @@ import java.lang.constant.Constable;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 public class Config {
     private static final Logger LOGGER = Saplanting.getLogger();
