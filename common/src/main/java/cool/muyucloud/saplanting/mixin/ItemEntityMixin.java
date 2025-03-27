@@ -550,7 +550,7 @@ public abstract class ItemEntityMixin extends Entity {
         String output = String.format("ItemEntity: \"%s\" at %s in world \"%s\", biomes \"%s\"\n",
             this.getDisplayName(), pos, dim, biomes);
         output += String.format("Item: \"%s\"(%s)",
-            item.getName(), BuiltInRegistries.ITEM.getKey(item));
+            item.getDefaultInstance().getDisplayName(), BuiltInRegistries.ITEM.getKey(item));
         return output;
     }
 }

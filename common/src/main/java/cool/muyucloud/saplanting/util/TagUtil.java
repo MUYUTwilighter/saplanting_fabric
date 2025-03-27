@@ -16,7 +16,7 @@ public class TagUtil {
                 Optional<ResourceKey<T>> maybeKey = registry.getResourceKey(entry);
                 // Check synced tag
                 if (maybeKey.isPresent()) {
-                    return registry.getOrThrow(maybeKey.get()).is(tagKey);
+                    return registry.getHolderOrThrow(maybeKey.get()).is(tagKey);
                 }
             }
         }
