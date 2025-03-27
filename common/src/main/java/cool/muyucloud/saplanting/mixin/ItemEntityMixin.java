@@ -204,14 +204,14 @@ public abstract class ItemEntityMixin extends Entity {
             Block block = blockItem.getBlock();
             BlockState state = block.defaultBlockState();
             if (block instanceof SaplingBlock saplingBlock) {
-                TreeGrowerAccess generator = (TreeGrowerAccess) (Object) ((SaplingBlockAccess) block).getTreeGrower();
+                TreeGrowerAccess generator = (TreeGrowerAccess) (Object) ((SaplingBlockAccess) block).saplanting$getTreeGrower();
                 /* Plant Large Tree */
                 if (CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && generator.saplanting_fabric$hasLargeTree()) {
                     for (BlockPos tmpPos : BlockPos.betweenClosed(pos, pos.offset(-1, 0, -1))) {
-                        if (((BushBlockAccess) saplingBlock).saplanting_fabric$invokeCanSurvive(state, world, tmpPos) && world.getBlockState(tmpPos).canBeReplaced()
-                            && ((BushBlockAccess) saplingBlock).saplanting_fabric$invokeCanSurvive(state, world, tmpPos.offset(1, 0, 0)) && world.getBlockState(tmpPos.offset(1, 0, 0)).canBeReplaced()
-                            && ((BushBlockAccess) saplingBlock).saplanting_fabric$invokeCanSurvive(state, world, tmpPos.offset(1, 0, 1)) && world.getBlockState(tmpPos.offset(1, 0, 1)).canBeReplaced()
-                            && ((BushBlockAccess) saplingBlock).saplanting_fabric$invokeCanSurvive(state, world, tmpPos.offset(0, 0, 1)) && world.getBlockState(tmpPos.offset(0, 0, 1)).canBeReplaced()) {
+                        if (((BushBlockAccess) saplingBlock).saplanting$invokeCanSurvive(state, world, tmpPos) && world.getBlockState(tmpPos).canBeReplaced()
+                            && ((BushBlockAccess) saplingBlock).saplanting$invokeCanSurvive(state, world, tmpPos.offset(1, 0, 0)) && world.getBlockState(tmpPos.offset(1, 0, 0)).canBeReplaced()
+                            && ((BushBlockAccess) saplingBlock).saplanting$invokeCanSurvive(state, world, tmpPos.offset(1, 0, 1)) && world.getBlockState(tmpPos.offset(1, 0, 1)).canBeReplaced()
+                            && ((BushBlockAccess) saplingBlock).saplanting$invokeCanSurvive(state, world, tmpPos.offset(0, 0, 1)) && world.getBlockState(tmpPos.offset(0, 0, 1)).canBeReplaced()) {
                             PlantContext context = new PlantContext();
                             context.setStack(stack);
                             context.setPos(tmpPos);
@@ -445,7 +445,7 @@ public abstract class ItemEntityMixin extends Entity {
         Item item = this.getItem().getItem();
         if (item instanceof BlockItem blockItem && blockItem.getBlock() instanceof BushBlock plantBlock) {
             BlockState state = plantBlock.defaultBlockState();
-            return ((BushBlockAccess) plantBlock).saplanting_fabric$invokeCanSurvive(state, this.level(), pos);
+            return ((BushBlockAccess) plantBlock).saplanting$invokeCanSurvive(state, this.level(), pos);
         } else {
             return this.level().getBlockState(pos).canBeReplaced();
         }

@@ -1,7 +1,7 @@
 package cool.muyucloud.saplanting.mixin;
 
-import cool.muyucloud.saplanting.util.Config;
 import cool.muyucloud.saplanting.Saplanting;
+import cool.muyucloud.saplanting.util.Config;
 import cool.muyucloud.saplanting.util.PlantContext;
 import cool.muyucloud.saplanting.util.Translation;
 import net.minecraft.ChatFormatting;
@@ -33,7 +33,7 @@ public class ServerWorldMixin {
     private static final MutableComponent MSG = Component.literal(Translation.translate("saplanting.onPlayerConnected.plantDisable"))
         .append(Component.literal(Translation.translate("saplanting.onPlayerConnected.plantDisable.click"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/saplanting property plantEnable true"))
+                .withClickEvent(new ClickEvent.RunCommand("/saplanting property plantEnable true"))
                 .withColor(ChatFormatting.GREEN)
                 .withUnderlined(true)));
 

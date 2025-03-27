@@ -6,20 +6,16 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import cool.muyucloud.saplanting.Saplanting;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.chat.ClickEvent;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.AirItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 
@@ -67,11 +63,11 @@ public class Command {
         // /saplanting language
         LiteralArgumentBuilder<CommandSourceStack> language = Commands.literal("language");
         language.executes(context -> queryLanguage(context.getSource()));
-        // /saplanting language switch <LANG>
+        // /saplanting language <LANG>
         for (String name : CONFIG.getValidLangs()) {
             language.then(Commands.literal(name).executes(context -> updateLanguage(name, context.getSource())));
         }
-        // /saplanting language switch default
+        // /saplanting language default
         language.then(Commands.literal("default")
             .executes(context -> updateLanguage("en_us", context.getSource())));
         root.then(language);
@@ -236,7 +232,7 @@ public class Command {
             MutableComponent text = Component.literal(Translation.translate("command.saplanting.property.set.success")
                 .formatted(key, Boolean.toString(value)));
             MutableComponent hover = Component.literal(Translation.translate("config.saplanting.property.%s".formatted(key)));
-            text.setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover)));
+            text.setStyle(Style.EMPTY.withHoverEvent(new HoverEvent.ShowText(hover)));
             sendFeedback(source, text, false);
         } else {
             MutableComponent text = Component.literal(Translation.translate("command.saplanting.property.set.already")
@@ -251,7 +247,7 @@ public class Command {
             MutableComponent text = Component.literal(Translation.translate("command.saplanting.property.set.success")
                 .formatted(key, Integer.toString(value)));
             MutableComponent hover = Component.literal(Translation.translate("config.saplanting.property.%s".formatted(key)));
-            text.setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover)));
+            text.setStyle(Style.EMPTY.withHoverEvent(new HoverEvent.ShowText(hover)));
             sendFeedback(source, text, false);
         } else {
             MutableComponent text = Component.literal(Translation.translate("command.saplanting.property.set.already")
@@ -265,7 +261,7 @@ public class Command {
         MutableComponent hover = Component.literal(Translation.translate("config.saplanting.property.%s".formatted(key)));
         MutableComponent text = Component.literal(Translation.translate("command.saplanting.property.get")
             .formatted(key, CONFIG.getAsString(key)));
-        text.setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover)));
+        text.setStyle(Style.EMPTY.withHoverEvent(new HoverEvent.ShowText(hover)));
         sendFeedback(source, text, false);
         return 1;
     }
@@ -286,27 +282,29 @@ public class Command {
         MutableComponent text = Component.literal(Translation.translate("command.saplanting.language.query").formatted(CONFIG.getAsString("language")));
         MutableComponent change = Component.literal(Translation.translate("command.saplanting.language.switch"))
             .setStyle(CLICKABLE_COMMAND
-                .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/saplanting language switch ")));
+                .withClickEvent(new ClickEvent.SuggestCommand("/saplanting language switch ")));
         sendFeedback(source, text.append(change), false);
         return 1;
     }
 
-    private static int load(CommandSourceStack source, boolean dedicated) {
+    private static int load(CommandSourceStack source, boolean dedicated) throws CommandSyntaxException {
         MutableComponent text;
         MutableComponent hover = Component.literal(Translation.translate("command.saplanting.file.open"));
-        MutableComponent file = Component.literal(CONFIG.stringConfigPath())
-            .setStyle(CLICKABLE_FILE
-                .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, CONFIG.stringConfigPath()))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover)));
+        MutableComponent file = Component.literal(CONFIG.stringConfigPath());
+        if (isLocal(source, dedicated)) {
+            file.setStyle(CLICKABLE_FILE
+                .withClickEvent(new ClickEvent.OpenFile(CONFIG.stringConfigPath()))
+                .withHoverEvent(new HoverEvent.ShowText(hover)));
+        }
         MutableComponent query = Component.literal(Translation.translate("command.saplanting.file.load.query"))
-            .setStyle(CLICKABLE_COMMAND.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/saplanting")));
+            .setStyle(CLICKABLE_COMMAND.withClickEvent(new ClickEvent.RunCommand("/saplanting")));
         if (CONFIG.load()) {
             text = Component.literal(Translation.translate("command.saplanting.file.load.success"));
             if (!dedicated) {
                 text.append(file);
             }
             text.append(" ").append(query);
-            sendFeedback(source, text, false);
+            sendFeedback(source, text, false, dedicated);
             return 1;
         } else {
             text = Component.literal(Translation.translate("command.saplanting.file.load.fail"));
@@ -321,16 +319,18 @@ public class Command {
     private static int save(CommandSourceStack source, boolean dedicated) {
         MutableComponent text;
         MutableComponent hover = Component.literal(Translation.translate("commands.saplanting.file.open"));
-        MutableComponent file = Component.literal(CONFIG.stringConfigPath())
-            .setStyle(CLICKABLE_FILE
-                .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, CONFIG.stringConfigPath()))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover)));
+        MutableComponent file = Component.literal(CONFIG.stringConfigPath());
+        if (isLocal(source, dedicated)) {
+            file.setStyle(CLICKABLE_FILE
+                .withClickEvent(new ClickEvent.OpenFile(CONFIG.stringConfigPath()))
+                .withHoverEvent(new HoverEvent.ShowText(hover)));
+        }
         if (CONFIG.save()) {
             text = Component.literal(Translation.translate("command.saplanting.file.save.success"));
             if (!dedicated) {
                 text.append(file);
             }
-            sendFeedback(source, text, false);
+            sendFeedback(source, text, false, dedicated);
             return 1;
         } else {
             text = Component.literal(Translation.translate("command.saplanting.file.save.fail"));
@@ -360,16 +360,15 @@ public class Command {
             MutableComponent head = Component.literal("- ");
             MutableComponent reset = Component.literal(Translation.translate("command.saplanting.reset"))
                 .setStyle(CLICKABLE_COMMAND
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                    .withClickEvent(new ClickEvent.RunCommand(
                         "/saplanting property %s default".formatted(key)))
-                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                    .withHoverEvent(new HoverEvent.ShowText(
                         Component.literal(Translation.translate("command.saplanting.reset.hover")
                             .formatted(DEFAULT_CONFIG.getAsString(key))))));
             MutableComponent hover = Component.literal(Translation.translate("config.saplanting.property.%s".formatted(key)));
             MutableComponent property = Component.literal(key).setStyle(CLICKABLE_COMMAND
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover))
-                .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
-                    "/saplanting property %s ".formatted(key))));
+                .withHoverEvent(new HoverEvent.ShowText(hover))
+                .withClickEvent(new ClickEvent.SuggestCommand("/saplanting property %s ".formatted(key))));
             MutableComponent value = Component.literal(": " + CONFIG.getAsString(key));
             head.append(reset).append(" ").append(property).append(value);
 
@@ -379,10 +378,10 @@ public class Command {
         /* [FORMER] PAGE [NEXT] */
         MutableComponent next = Component.literal(Translation.translate("command.saplanting.next"))
             .setStyle(CLICKABLE_COMMAND
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/saplanting " + (page + 1))));
+                .withClickEvent(new ClickEvent.RunCommand("/saplanting " + (page + 1))));
         MutableComponent former = Component.literal(Translation.translate("command.saplanting.former"))
             .setStyle(CLICKABLE_COMMAND
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/saplanting " + (page - 1))));
+                .withClickEvent(new ClickEvent.RunCommand("/saplanting " + (page - 1))));
         MutableComponent foot;
         if (arr.size() <= 8) {
             foot = Component.literal(" 1 ");
@@ -404,7 +403,7 @@ public class Command {
                 .formatted(id));
             MutableComponent undo = Component.literal(Translation.translate("command.saplanting.list.click.remove"))
                 .setStyle(CLICKABLE_COMMAND
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                    .withClickEvent(new ClickEvent.RunCommand(
                         "/saplanting blacklist remove %s".formatted(Config.formatItemLike(id)))));
             sendFeedback(source, text.append(" ").append(undo), false);
             return 1;
@@ -422,7 +421,7 @@ public class Command {
                 .formatted(id));
             MutableComponent undo = Component.literal(Translation.translate("command.saplanting.list.click.undo"))
                 .setStyle(CLICKABLE_COMMAND
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                    .withClickEvent(new ClickEvent.RunCommand(
                         "/saplanting blacklist add %s".formatted(Config.formatItemLike(id)))));
             sendFeedback(source, text.append(" ").append(undo), false);
             return 1;
@@ -458,7 +457,7 @@ public class Command {
             MutableComponent head = Component.literal("- ");
             MutableComponent remove = Component.literal(Translation.translate("command.saplanting.list.click.remove"));
             remove.setStyle(CLICKABLE_COMMAND
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(new ClickEvent.RunCommand(
                     "/saplanting blacklist remove %s".formatted(id))));
             MutableComponent item = Component.literal(id);
             sendFeedback(source, head.append(remove).append(" ").append(item), false);
@@ -467,10 +466,10 @@ public class Command {
         /* [FORMER] << PAGE >> [NEXT] */
         MutableComponent next = Component.literal(Translation.translate("command.saplanting.next"))
             .setStyle(CLICKABLE_COMMAND
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/saplanting blacklist " + (page + 1))));
+                .withClickEvent(new ClickEvent.RunCommand("/saplanting blacklist " + (page + 1))));
         MutableComponent former = Component.literal(Translation.translate("command.saplanting.former"))
             .setStyle(CLICKABLE_COMMAND
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/saplanting blacklist " + (page - 1))));
+                .withClickEvent(new ClickEvent.RunCommand("/saplanting blacklist " + (page - 1))));
         MutableComponent foot;
         if (blacklist.size() <= 8) {
             foot = Component.literal(" 1 ");
@@ -503,7 +502,7 @@ public class Command {
                 .formatted(id));
             MutableComponent undo = Component.literal(Translation.translate("command.saplanting.list.click.undo"))
                 .setStyle(CLICKABLE_COMMAND
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                    .withClickEvent(new ClickEvent.RunCommand(
                         "/saplanting whitelist remove %s".formatted(Config.formatItemLike(id)))));
             sendFeedback(source, text.append(" ").append(undo), false);
             return 1;
@@ -521,7 +520,7 @@ public class Command {
                 .formatted(id));
             MutableComponent undo = Component.literal(Translation.translate("command.saplanting.list.click.undo"))
                 .setStyle(CLICKABLE_COMMAND
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                    .withClickEvent(new ClickEvent.RunCommand(
                         "/saplanting whitelist add %s".formatted(Config.formatItemLike(id)))));
             sendFeedback(source, text.append(" ").append(undo), false);
             return 1;
@@ -557,7 +556,7 @@ public class Command {
             MutableComponent head = Component.literal("- ");
             MutableComponent remove = Component.literal(Translation.translate("command.saplanting.list.click.remove"));
             remove.setStyle(CLICKABLE_COMMAND
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(new ClickEvent.RunCommand(
                     "/saplanting whitelist remove %s".formatted(id))));
             MutableComponent item = Component.literal(id);
             sendFeedback(source, head.append(remove).append(" ").append(item), false);
@@ -566,10 +565,10 @@ public class Command {
         /* [FORMER] << PAGE >> [NEXT] */
         MutableComponent next = Component.literal(Translation.translate("command.saplanting.next"))
             .setStyle(CLICKABLE_COMMAND
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/saplanting whitelist " + (page + 1))));
+                .withClickEvent(new ClickEvent.RunCommand("/saplanting whitelist " + (page + 1))));
         MutableComponent former = Component.literal(Translation.translate("command.saplanting.former"))
             .setStyle(CLICKABLE_COMMAND
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/saplanting whitelist " + (page - 1))));
+                .withClickEvent(new ClickEvent.RunCommand("/saplanting whitelist " + (page - 1))));
         MutableComponent foot;
         if (whitelist.size() <= 8) {
             foot = Component.literal(" 1 ");
@@ -597,6 +596,18 @@ public class Command {
     }
 
     private static void sendFeedback(CommandSourceStack source, Component text, boolean broadcastToOps) {
-        source.sendSuccess(() -> text, broadcastToOps);
+        sendFeedback(source, text, broadcastToOps, true);
+    }
+
+    private static void sendFeedback(CommandSourceStack source, Component text, boolean broadcastToOps, boolean dedicated) {
+        if (isLocal(source, dedicated)) {
+            ClientUtil.message(text, false);
+        } else {
+            source.sendSuccess(() -> text, broadcastToOps);
+        }
+    }
+
+    public static boolean isLocal(CommandSourceStack source, boolean dedicated) {
+        return !dedicated && source.getEntity() instanceof Player player && ClientUtil.isLocalPlayer(player.getUUID());
     }
 }
