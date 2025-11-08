@@ -12,6 +12,7 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.NameAndId;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -39,7 +40,7 @@ public class ServerWorldMixin {
 
     @Inject(method = "addPlayer", at = @At("TAIL"))
     public void onPlayerConnected(ServerPlayer player, CallbackInfo ci) {
-        boolean isOp = this.server.getPlayerList().isOp(player.getGameProfile());
+        boolean isOp = this.server.getPlayerList().isOp(new NameAndId(player.getGameProfile()));
         if (CONFIG.getAsBoolean("showTitleOnOpConnected") && isOp && !CONFIG.getAsBoolean("plantEnable")) {
             player.displayClientMessage(MSG, false);
         }
