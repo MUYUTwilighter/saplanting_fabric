@@ -2,7 +2,6 @@ package cool.muyucloud.saplanting.util;
 
 import com.mojang.authlib.GameProfile;
 import cool.muyucloud.saplanting.Saplanting;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -38,7 +37,7 @@ public class FakePlayer extends Player {
     }
 
     public FakePlayer(Level level) {
-        super(level, new BlockPos(0, 0, 0), 0, DEFAULT_PROFILE);
+        super(level, DEFAULT_PROFILE);
     }
 
     @Override
