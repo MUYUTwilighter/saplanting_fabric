@@ -5,5 +5,5 @@ import org.spongepowered.asm.mixin.Unique;
 
 public interface SaplingBlockAccess {
     @Unique
-    TreeGrower saplanting$getTreeGrower();
+    TreeGrower splt$getTreeGrower();
 }

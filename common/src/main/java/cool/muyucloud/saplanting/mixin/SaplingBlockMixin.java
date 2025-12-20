@@ -21,7 +21,7 @@ public abstract class SaplingBlockMixin extends VegetationBlock implements Bonem
 
     @Override
     @Unique
-    public TreeGrower saplanting$getTreeGrower() {
+    public TreeGrower splt$getTreeGrower() {
         return this.treeGrower;
     }
 }

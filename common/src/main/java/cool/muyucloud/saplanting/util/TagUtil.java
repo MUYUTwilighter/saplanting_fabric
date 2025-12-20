@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public class TagUtil {
     public static <T> boolean isIn(TagKey<T> tagKey, T entry) {
-        Optional<? extends Registry<?>> optionalRegistry = BuiltInRegistries.REGISTRY.getOptional(tagKey.registry().location());
+        Optional<? extends Registry<?>> optionalRegistry = BuiltInRegistries.REGISTRY.getOptional(tagKey.registry().identifier());
         if (optionalRegistry.isPresent()) {
             if (tagKey.isFor(optionalRegistry.get().key())) {
                 Registry<T> registry = (Registry<T>) optionalRegistry.get();

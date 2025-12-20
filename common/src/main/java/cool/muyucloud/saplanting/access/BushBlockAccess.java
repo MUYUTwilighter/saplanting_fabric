@@ -5,5 +5,5 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.state.BlockState;
 
 public interface BushBlockAccess {
-    boolean saplanting$invokeCanSurvive(BlockState blockState, LevelReader levelReader, BlockPos blockPos);
+    boolean splt$invokeCanSurvive(BlockState blockState, LevelReader levelReader, BlockPos blockPos);
 }

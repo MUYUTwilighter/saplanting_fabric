@@ -13,7 +13,7 @@ public abstract class BushBlockMixin implements BushBlockAccess {
     @Shadow protected abstract boolean canSurvive(BlockState blockState, LevelReader levelReader, BlockPos blockPos);
 
     @Override
-    public boolean saplanting$invokeCanSurvive(BlockState blockState, LevelReader levelReader, BlockPos blockPos) {
+    public boolean splt$invokeCanSurvive(BlockState blockState, LevelReader levelReader, BlockPos blockPos) {
         return this.canSurvive(blockState, levelReader, blockPos);
     }
 }

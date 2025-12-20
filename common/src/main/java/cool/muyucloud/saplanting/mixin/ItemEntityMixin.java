@@ -9,7 +9,7 @@ import cool.muyucloud.saplanting.util.PlantContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.Entity;
@@ -43,17 +43,16 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Mixin(ItemEntity.class)
 public abstract class ItemEntityMixin extends Entity {
-
     @Shadow
-    public abstract Component getName();
+    public abstract @NotNull Component getName();
 
     @Shadow
     public abstract ItemStack getItem();
 
     @Unique
-    private static final Config CONFIG = Saplanting.getConfig();
+    private static final Config splt$CONFIG = Saplanting.getConfig();
     @Unique
-    private static final Logger LOGGER = Saplanting.getLogger();
+    private static final Logger splt$LOGGER = Saplanting.getLogger();
 
     @Unique
     private static final ConcurrentLinkedQueue<ItemEntityMixin> CHECK_TASKS = new ConcurrentLinkedQueue<>();
@@ -61,7 +60,7 @@ public abstract class ItemEntityMixin extends Entity {
     private static final HashSet<Item> CONTAIN_ERROR = new HashSet<>();
 
     @Unique
-    private int plantAge = 0;
+    private int splt$plantAge = 0;
 
     public ItemEntityMixin(EntityType<?> type, Level world) {
         super(type, world);
@@ -76,7 +75,7 @@ public abstract class ItemEntityMixin extends Entity {
      */
     @Inject(method = "tick", at = @At("TAIL"))
     public void tick(CallbackInfo ci) {
-        if (this.level().isClientSide() || !CONFIG.getAsBoolean("plantEnable")) {
+        if (this.level().isClientSide() || !splt$CONFIG.getAsBoolean("plantEnable")) {
             return;
         }
 
@@ -87,7 +86,7 @@ public abstract class ItemEntityMixin extends Entity {
         }
 
         /* Kill if multi thread disabled, and deal with item here */
-        if (!CONFIG.getAsBoolean("multiThread")) {
+        if (!splt$CONFIG.getAsBoolean("multiThread")) {
             Saplanting.THREAD_ALIVE = false;
             this.run();
             return;
@@ -96,7 +95,7 @@ public abstract class ItemEntityMixin extends Entity {
         /* Run Thread if thread not alive */
         if (!Saplanting.THREAD_ALIVE) {
             Saplanting.THREAD_ALIVE = true;
-            LOGGER.info("Launching Saplanting core thread.");
+            splt$LOGGER.info("Launching Saplanting core thread.");
             Thread thread = new Thread(ItemEntityMixin::multiThreadRun);
             thread.setName("SaplantingCoreThread");
             thread.start();
@@ -119,7 +118,7 @@ public abstract class ItemEntityMixin extends Entity {
     @Unique
     private boolean tickCheck() {
         Item item = this.getItem().getItem();
-        if (!this.onGround() || !CONFIG.getAsBoolean("plantEnable") || !Saplanting.isPlantAllowed(item)) {
+        if (!this.onGround() || !splt$CONFIG.getAsBoolean("plantEnable") || !Saplanting.isPlantAllowed(item)) {
             return false;
         }
         BlockPos pos = this.blockPosition();
@@ -160,12 +159,12 @@ public abstract class ItemEntityMixin extends Entity {
         }
 
         /* Player Nearby Check */
-        int playerAround = CONFIG.getAsInt("playerAround");
+        int playerAround = splt$CONFIG.getAsInt("playerAround");
         if (playerAround > 0 && level().hasNearbyAlivePlayer(getX(), getY(), getZ(), playerAround)) {
             return false;
         }
 
-        int avoidDense = CONFIG.getAsInt("avoidDense");
+        int avoidDense = splt$CONFIG.getAsInt("avoidDense");
         if (block instanceof SaplingBlock) {
             /* Avoid Dense Check */
             if (avoidDense > 0) {
@@ -204,14 +203,14 @@ public abstract class ItemEntityMixin extends Entity {
             Block block = blockItem.getBlock();
             BlockState state = block.defaultBlockState();
             if (block instanceof SaplingBlock saplingBlock) {
-                TreeGrowerAccess generator = (TreeGrowerAccess) (Object) ((SaplingBlockAccess) block).saplanting$getTreeGrower();
+                TreeGrowerAccess generator = (TreeGrowerAccess) (Object) ((SaplingBlockAccess) block).splt$getTreeGrower();
                 /* Plant Large Tree */
-                if (CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && generator.saplanting_fabric$hasLargeTree()) {
+                if (splt$CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && generator.saplanting_fabric$hasLargeTree()) {
                     for (BlockPos tmpPos : BlockPos.betweenClosed(pos, pos.offset(-1, 0, -1))) {
-                        if (((BushBlockAccess) saplingBlock).saplanting$invokeCanSurvive(state, world, tmpPos) && world.getBlockState(tmpPos).canBeReplaced()
-                            && ((BushBlockAccess) saplingBlock).saplanting$invokeCanSurvive(state, world, tmpPos.offset(1, 0, 0)) && world.getBlockState(tmpPos.offset(1, 0, 0)).canBeReplaced()
-                            && ((BushBlockAccess) saplingBlock).saplanting$invokeCanSurvive(state, world, tmpPos.offset(1, 0, 1)) && world.getBlockState(tmpPos.offset(1, 0, 1)).canBeReplaced()
-                            && ((BushBlockAccess) saplingBlock).saplanting$invokeCanSurvive(state, world, tmpPos.offset(0, 0, 1)) && world.getBlockState(tmpPos.offset(0, 0, 1)).canBeReplaced()) {
+                        if (((BushBlockAccess) saplingBlock).splt$invokeCanSurvive(state, world, tmpPos) && world.getBlockState(tmpPos).canBeReplaced()
+                            && ((BushBlockAccess) saplingBlock).splt$invokeCanSurvive(state, world, tmpPos.offset(1, 0, 0)) && world.getBlockState(tmpPos.offset(1, 0, 0)).canBeReplaced()
+                            && ((BushBlockAccess) saplingBlock).splt$invokeCanSurvive(state, world, tmpPos.offset(1, 0, 1)) && world.getBlockState(tmpPos.offset(1, 0, 1)).canBeReplaced()
+                            && ((BushBlockAccess) saplingBlock).splt$invokeCanSurvive(state, world, tmpPos.offset(0, 0, 1)) && world.getBlockState(tmpPos.offset(0, 0, 1)).canBeReplaced()) {
                             PlantContext context = new PlantContext();
                             context.setStack(stack);
                             context.setPos(tmpPos);
@@ -223,7 +222,7 @@ public abstract class ItemEntityMixin extends Entity {
                     }
                 }
                 /* Ignore Shape */
-                if (!CONFIG.getAsBoolean("ignoreShape") && !generator.saplanting_fabric$hasSmallTree()) {
+                if (!splt$CONFIG.getAsBoolean("ignoreShape") && !generator.saplanting_fabric$hasSmallTree()) {
                     return;
                 }
             }
@@ -445,7 +444,7 @@ public abstract class ItemEntityMixin extends Entity {
         Item item = this.getItem().getItem();
         if (item instanceof BlockItem blockItem && blockItem.getBlock() instanceof BushBlock plantBlock) {
             BlockState state = plantBlock.defaultBlockState();
-            return ((BushBlockAccess) plantBlock).saplanting$invokeCanSurvive(state, this.level(), pos);
+            return ((BushBlockAccess) plantBlock).splt$invokeCanSurvive(state, this.level(), pos);
         } else {
             return this.level().getBlockState(pos).canBeReplaced();
         }
@@ -462,14 +461,14 @@ public abstract class ItemEntityMixin extends Entity {
      */
     @Unique
     public void run() {
-        ++this.plantAge;
+        ++this.splt$plantAge;
 
         if (!this.tickCheck()) {
-            this.plantAge = 0;
+            this.splt$plantAge = 0;
             return;
         }
 
-        if (this.plantAge < CONFIG.getAsInt("plantDelay")) {
+        if (this.splt$plantAge < splt$CONFIG.getAsInt("plantDelay")) {
             return;
         }
 
@@ -477,17 +476,17 @@ public abstract class ItemEntityMixin extends Entity {
             try {
                 this.plant();
             } catch (Exception e) {
-                LOGGER.error("Some Errors occurred during planting this item:  ");
-                LOGGER.error(this.getDetail());
+                splt$LOGGER.error("Some Errors occurred during planting this item:  ");
+                splt$LOGGER.error(this.getDetail());
                 e.printStackTrace();
                 CONTAIN_ERROR.add(this.getItem().getItem());
-                if (CONFIG.getAsBoolean("autoBlackList")) {
-                    ResourceLocation id = BuiltInRegistries.ITEM.getKey(this.getItem().getItem());
-                    CONFIG.addToBlackList(id.toString());
+                if (splt$CONFIG.getAsBoolean("autoBlackList")) {
+                    Identifier id = BuiltInRegistries.ITEM.getKey(this.getItem().getItem());
+                    splt$CONFIG.addToBlackList(id.toString());
                 }
             }
         }
-        this.plantAge = 0;
+        this.splt$plantAge = 0;
     }
 
     /**
@@ -499,9 +498,9 @@ public abstract class ItemEntityMixin extends Entity {
     @Unique
     private static void multiThreadRun() {
         try {
-            while (Saplanting.THREAD_ALIVE && CONFIG.getAsBoolean("plantEnable") && CONFIG.getAsBoolean("multiThread")) {
+            while (Saplanting.THREAD_ALIVE && splt$CONFIG.getAsBoolean("plantEnable") && splt$CONFIG.getAsBoolean("multiThread")) {
                 long start = LocalTime.now().getLong(ChronoField.MILLI_OF_DAY);
-                while (!CHECK_TASKS.isEmpty() && CONFIG.getAsBoolean("plantEnable") && Saplanting.THREAD_ALIVE && CONFIG.getAsBoolean("multiThread")) {
+                while (!CHECK_TASKS.isEmpty() && splt$CONFIG.getAsBoolean("plantEnable") && Saplanting.THREAD_ALIVE && splt$CONFIG.getAsBoolean("multiThread")) {
                     ItemEntityMixin task = CHECK_TASKS.poll();
                     Item item = task.getItem().getItem();
                     if (item instanceof AirItem) { // In case item was removed mill-secs ago
@@ -514,9 +513,9 @@ public abstract class ItemEntityMixin extends Entity {
                 long complement = delta < 0 || delta > 20 ? 0 : 20 - delta;
                 Thread.sleep(complement);
             }
-            LOGGER.info("Saplanting core thread exiting.");
+            splt$LOGGER.info("Saplanting core thread exiting.");
         } catch (Exception e) {
-            LOGGER.info("Saplanting core thread exited unexpectedly!");
+            splt$LOGGER.info("Saplanting core thread exited unexpectedly!");
             e.printStackTrace();
         }
         CHECK_TASKS.clear();
@@ -531,10 +530,10 @@ public abstract class ItemEntityMixin extends Entity {
     @Unique
     private void addToQueue() {
         int size = CHECK_TASKS.size();
-        if (size > CONFIG.getAsInt("maxTask")) {
+        if (size > splt$CONFIG.getAsInt("maxTask")) {
             CHECK_TASKS.clear();
-            if (CONFIG.getAsBoolean("warnTaskQueue")) {
-                LOGGER.warn(String.format("Too many items! Cleared %s tasks.", size));
+            if (splt$CONFIG.getAsBoolean("warnTaskQueue")) {
+                splt$LOGGER.warn(String.format("Too many items! Cleared %s tasks.", size));
             }
         }
         CHECK_TASKS.add(this);

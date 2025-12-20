@@ -3,7 +3,7 @@ package cool.muyucloud.saplanting.util;
 import com.google.gson.*;
 import cool.muyucloud.saplanting.Saplanting;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import org.apache.logging.log4j.Logger;
@@ -300,15 +300,15 @@ public class Config {
         for (JsonElement e : array) {
             String entry = e.getAsString();
             if (entry.startsWith("#")) {
-                TagKey<Item> tag = TagKey.create(BuiltInRegistries.ITEM.key(), ResourceLocation.parse(entry.substring(1)));
+                TagKey<Item> tag = TagKey.create(BuiltInRegistries.ITEM.key(), Identifier.parse(entry.substring(1)));
                 if (TagUtil.isIn(tag, item)) {
                     return true;
                 }
             } else if (entry.equals("*")) {
                 return true;
             } else {
-                ResourceLocation entryId = ResourceLocation.parse(entry);
-                ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(item);
+                Identifier entryId = Identifier.parse(entry);
+                Identifier itemId = BuiltInRegistries.ITEM.getKey(item);
                 if (itemId.equals(entryId)) {
                     return true;
                 }
@@ -408,15 +408,15 @@ public class Config {
         for (JsonElement e : array) {
             String entry = e.getAsString();
             if (entry.startsWith("#")) {
-                TagKey<Item> tag = TagKey.create(BuiltInRegistries.ITEM.key(), ResourceLocation.parse(entry.substring(1)));
+                TagKey<Item> tag = TagKey.create(BuiltInRegistries.ITEM.key(), Identifier.parse(entry.substring(1)));
                 if (TagUtil.isIn(tag, item)) {
                     return true;
                 }
             } else if (entry.equals("*")) {
                 return true;
             } else {
-                ResourceLocation entryId = ResourceLocation.parse(entry);
-                ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(item);
+                Identifier entryId = Identifier.parse(entry);
+                Identifier itemId = BuiltInRegistries.ITEM.getKey(item);
                 if (itemId.equals(entryId)) {
                     return true;
                 }
@@ -501,12 +501,12 @@ public class Config {
     @Nullable
     public static String formatItemLike(String itemLike) {
         if (itemLike.startsWith("#")) {
-            ResourceLocation id = ResourceLocation.tryParse(itemLike.substring(1));
+            Identifier id = Identifier.tryParse(itemLike.substring(1));
             return id == null ? null : "#" + id;
         } else if (itemLike.equals("*")) {
             return "*";
         } else {
-            ResourceLocation id = ResourceLocation.tryParse(itemLike);
+            Identifier id = Identifier.tryParse(itemLike);
             return id == null ? null : id.toString();
         }
     }

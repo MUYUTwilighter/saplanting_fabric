@@ -14,7 +14,9 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.permissions.Permission;
+import net.minecraft.server.permissions.PermissionLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -34,7 +36,7 @@ public class Command {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext access, boolean dedicated) {
         /* /saplanting <PAGE> */
         LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal("saplanting");
-        root.requires(source -> source.hasPermission(2));
+        root.requires(source -> source.permissions().hasPermission(new Permission.HasCommandLevel(PermissionLevel.GAMEMASTERS)));
         root.executes(context -> displayAll(1, context.getSource()));
         root.then(Commands.argument("page", IntegerArgumentType.integer())
             .executes(context -> displayAll(IntegerArgumentType.getInteger(context, "page"), context.getSource())));
@@ -102,8 +104,8 @@ public class Command {
             .requires(CommandSourceStack::isPlayer)
             .then(Commands.argument("item", StringArgumentType.greedyString())
                 .suggests((context, builder) -> {
-                    Set<ResourceLocation> itemIds = BuiltInRegistries.ITEM.keySet();
-                    for (ResourceLocation id : itemIds) {
+                    Set<Identifier> itemIds = BuiltInRegistries.ITEM.keySet();
+                    for (Identifier id : itemIds) {
                         builder.suggest(id.toString());
                     }
                     builder.suggest("*");
@@ -134,8 +136,8 @@ public class Command {
             .requires(CommandSourceStack::isPlayer)
             .then(Commands.argument("item", StringArgumentType.greedyString())
                 .suggests((context, builder) -> {
-                    Set<ResourceLocation> itemIds = BuiltInRegistries.ITEM.keySet();
-                    for (ResourceLocation id : itemIds) {
+                    Set<Identifier> itemIds = BuiltInRegistries.ITEM.keySet();
+                    for (Identifier id : itemIds) {
                         builder.suggest(id.toString());
                     }
                     builder.suggest("*");
@@ -177,8 +179,8 @@ public class Command {
                 .requires(CommandSourceStack::isPlayer)
             .then(Commands.argument("item", StringArgumentType.greedyString())
                 .suggests((context, builder) -> {
-                    Set<ResourceLocation> itemIds = BuiltInRegistries.ITEM.keySet();
-                    for (ResourceLocation id : itemIds) {
+                    Set<Identifier> itemIds = BuiltInRegistries.ITEM.keySet();
+                    for (Identifier id : itemIds) {
                         builder.suggest(id.toString());
                     }
                     builder.suggest("*");
@@ -209,8 +211,8 @@ public class Command {
             .requires(CommandSourceStack::isPlayer)
             .then(Commands.argument("item", StringArgumentType.greedyString())
                 .suggests((context, builder) -> {
-                    Set<ResourceLocation> itemIds = BuiltInRegistries.ITEM.keySet();
-                    for (ResourceLocation id : itemIds) {
+                    Set<Identifier> itemIds = BuiltInRegistries.ITEM.keySet();
+                    for (Identifier id : itemIds) {
                         builder.suggest(id.toString());
                     }
                     builder.suggest("*");
