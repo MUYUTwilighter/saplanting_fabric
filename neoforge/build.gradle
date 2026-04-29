@@ -64,12 +64,12 @@ sourceSets.configureEach {
     }
 }
 
-def archivesName = "${mod_id}-${project.name}-${minecraft_version}"
+def archivesName = "${mod_id}-${minecraft_version}-${project.name}-${version}"
 
 modrinth {
     token = System.getenv("MODRINTH_MOD_PUBLISH")
     projectId = "saplanting"
-    versionName = archivesName + "-neoforge-" + version
+    versionName = archivesName
     versionNumber = version
     versionType = version.contains("pre") ? "beta" : "release"
     uploadFile = jar
@@ -83,12 +83,12 @@ modrinth {
 tasks.register('curseforge', TaskPublishCurseForge) {
     apiToken = System.getenv("CURSEFORGE_MOD_PUBLISH")
     def mainFile = upload('576864', jar)
-    mainFile.displayName = archivesName + "-neoforge-" + version
+    mainFile.displayName = archivesName
     mainFile.releaseType = version.contains("pre") ? "beta" : "release"
     mainFile.changelog = rootProject.file("changelog.md").text
     mainFile.changelogType = 'markdown'
     mainFile.gameVersions = [minecraft_version]
-    mainFile.addJavaVersion("Java 21")
+    mainFile.addJavaVersion("Java 25")
     mainFile.addEnvironment("server", "client")
     mainFile.addModLoader("neoforge")
     mainFile.addRequirement("architectury-api")
