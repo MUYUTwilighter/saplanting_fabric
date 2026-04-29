@@ -1,32 +1,35 @@
 {
-  "schemaVersion": 1,
-  "id": "saplanting",
-  "version": "${version}",
-  "name": "saplanting",
-  "description": "",
-  "authors": [
-    "MUYU_Twilighter"
-  ],
-  "contact": {
-    "homepage": ""
-  },
-  "license": "All-Rights-Reserved",
-  "icon": "assets/saplanting/icon.png",
-  "environment": "*",
-  "entrypoints": {
-    "main": [
-      "cool.muyucloud.saplanting.fabric.SaplantingFabric"
+    "schemaVersion": 1,
+    "id": "${mod_id}",
+    "version": "${version}",
+    "name": "${mod_name}",
+    "description": "${description}",
+    "authors": [
+        "${mod_author}"
     ],
-    "client": [
-      "cool.muyucloud.saplanting.fabric.client.SaplantingFabricClient"
-    ]
-  },
-  "mixins": [
-    "saplanting.mixins.json"
-  ],
-  "depends": {
-    "fabricloader": ">=0.16.9",
-    "minecraft": "~1.21",
-    "java": ">=21"
-  }
+    "contact": {
+        "homepage": "https://fabricmc.net/",
+        "sources": "https://github.com/FabricMC/fabric-example-mod"
+    },
+    "license": "${license}",
+    "icon": "icon.png",
+    "environment": "*",
+    "entrypoints": {
+        "main": [
+            "cool.muyucloud.saplanting.fabric.SaplantingFabric"
+        ]
+    },
+    "mixins": [
+        "${mod_id}.mixins.json"
+    ],
+    "depends": {
+        "fabricloader": "*",
+        "fabric-api": "*",
+        "minecraft": "*",
+        "java": "*"
+    },
+    "suggests": {
+        "another-mod": "*"
+    }
 }
+  

@@ -12,6 +12,7 @@ public class TagUtil {
         Optional<? extends Registry<?>> optionalRegistry = BuiltInRegistries.REGISTRY.getOptional(tagKey.registry().identifier());
         if (optionalRegistry.isPresent()) {
             if (tagKey.isFor(optionalRegistry.get().key())) {
+                @SuppressWarnings("unchecked")
                 Registry<T> registry = (Registry<T>) optionalRegistry.get();
                 Optional<ResourceKey<T>> maybeKey = registry.getResourceKey(entry);
                 // Check synced tag

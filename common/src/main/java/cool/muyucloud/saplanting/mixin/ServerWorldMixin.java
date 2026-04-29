@@ -42,7 +42,7 @@ public class ServerWorldMixin {
     public void onPlayerConnected(ServerPlayer player, CallbackInfo ci) {
         boolean isOp = this.server.getPlayerList().isOp(new NameAndId(player.getGameProfile()));
         if (CONFIG.getAsBoolean("showTitleOnOpConnected") && isOp && !CONFIG.getAsBoolean("plantEnable")) {
-            player.displayClientMessage(MSG, false);
+            player.sendSystemMessage(MSG);
         }
     }
 
