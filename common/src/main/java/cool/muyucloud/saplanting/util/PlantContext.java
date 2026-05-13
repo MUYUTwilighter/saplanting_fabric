@@ -10,6 +10,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -38,7 +39,7 @@ public class PlantContext {
 
     private void useOnBlock(BlockPos pos) {
         fakePlayer.setMainHandItem(stack);
-        UseOnContext context = new UseOnContext(fakePlayer, InteractionHand.MAIN_HAND, new BlockHitResult(pos.above().getCenter(), Direction.UP, pos, false));
+        UseOnContext context = new UseOnContext(fakePlayer, InteractionHand.MAIN_HAND, new BlockHitResult(new Vec3(pos.above()).add(0.5, 0.5, 0.5), Direction.UP, pos, false));
         InteractionResult result = stack.useOn(context);
         fakePlayer.removeMainHandItem();
         Item item = stack.getItem();
