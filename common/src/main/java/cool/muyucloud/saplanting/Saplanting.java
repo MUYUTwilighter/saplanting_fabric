@@ -1,6 +1,7 @@
 package cool.muyucloud.saplanting;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.logging.LogUtils;
 import cool.muyucloud.saplanting.util.Command;
 import cool.muyucloud.saplanting.util.Config;
 import cool.muyucloud.saplanting.util.FakePlayer;
@@ -9,12 +10,11 @@ import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.Item;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
 
 public final class Saplanting {
     public static final String MOD_ID = "saplanting";
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final Config CONFIG = new Config();
     private static final Config DEFAULT_CONFIG = new Config();
 
